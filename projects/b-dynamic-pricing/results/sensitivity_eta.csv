@@ -1,0 +1,13 @@
+eta,policy,revenue,sell_out_probability
+0.0,Fixed price of 80,140329.33333333334,0.0
+0.0,"Schedule, start 120 slope 0.6 scarcity 0.4",138163.5,0.0
+0.0,Lookahead over 20 days,142988.5,0.9
+0.3,Fixed price of 80,140329.33333333334,0.0
+0.3,"Schedule, start 120 slope 0.6 scarcity 0.4",137861.5,0.0
+0.3,Lookahead over 20 days,142599.66666666666,0.9
+0.6,Fixed price of 80,140329.33333333334,0.0
+0.6,"Schedule, start 120 slope 0.6 scarcity 0.4",137712.33333333334,0.0
+0.6,Lookahead over 20 days,142230.16666666666,0.8333333333333334
+1.0,Fixed price of 80,140329.33333333334,0.0
+1.0,"Schedule, start 120 slope 0.6 scarcity 0.4",137386.66666666666,0.0
+1.0,Lookahead over 20 days,141733.33333333334,0.7333333333333333

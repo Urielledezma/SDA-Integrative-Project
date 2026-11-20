@@ -414,6 +414,8 @@ Every policy sees the same scenarios. Differences measured on different draws mi
 Tuning and reporting use different seeds. Parameters are chosen on scenarios drawn from one seed and the numbers in this report come from five hundred scenarios drawn from another, so a parameter that happened to suit the first set cannot flatter itself on the same set.
 
 Comparisons are paired. Because the scenarios are shared, a policy and its baseline are observed on the same draw, so the interval that answers whether one beats the other is the interval around the mean of the per-scenario difference, which is narrower than the interval around either mean and is the one reported.
+
+A fourth rule was added after the first search returned an answer we did not believe. Tuning the band against the objective alone selects 50%, the widest value on the grid, at which the rule fires in almost no month and the policy has quietly become the baseline. That is the correct answer to the question as posed, and it exposes that the question was wrong, because Part 2 caps any holding at 35%, the objective never mentions that cap again, and a policy is therefore free to let the weights drift through it. The search below is restricted to settings that keep the cap at the 95th percentile across scenarios, while the whole grid is printed with the constraint shown, since the shape of the trade-off between the objective and the mandate is the finding rather than a detail of the search.
 """)
 
 code(r"""
@@ -422,27 +424,38 @@ reference = simulator.reference_wealth(client.reference, config.INITIAL_WEALTH)
 print(f"reference point {reference:,.0f}, which is "
       f"{reference / config.INITIAL_WEALTH:g} times the {config.INITIAL_WEALTH:,.0f} invested")
 
+keeps_mandate = lambda out: evaluate.mandate_is_kept(out, config.MAX_POSITION)
+
 best_band, band_rows = evaluate.tune(
     lambda p: policies.band_rebalance(target, p[0]),
-    [(b,) for b in config.BAND_GRID], tune_paths, target, client, reference)
+    [(b,) for b in config.BAND_GRID], tune_paths, target, client, reference,
+    feasible=keeps_mandate)
 band = best_band["parameters"][0]
+unconstrained = max(band_rows, key=lambda row: row["score"])
 
 cfa_grid = [(p, e) for p in config.RISK_PENALTY_GRID for e in config.RESOLVE_EVERY_GRID]
 best_cfa, cfa_rows = evaluate.tune(
     lambda p: policies.periodic_resolve(target, mu, sigma, classes, p[0], p[1]),
-    cfa_grid, tune_paths, target, client, reference)
+    cfa_grid, tune_paths, target, client, reference, feasible=keeps_mandate)
 penalty, every = best_cfa["parameters"]
 
-print(f"\ntuned on {config.N_TUNE} scenarios from seed {config.TUNE_SEED}")
+print(f"\ntuned on {config.N_TUNE} scenarios from seed {config.TUNE_SEED}, "
+      f"subject to keeping the {config.MAX_POSITION:.0%} position cap")
 print(f"  band        {band:.0%}  chosen from {[f'{b:.0%}' for b in config.BAND_GRID]}")
 print(f"  re-solve    penalty {penalty:g} every {every} months, "
       f"chosen from {len(cfa_grid)} combinations")
+print(f"\nwithout the constraint the band search picks "
+      f"{unconstrained['parameters'][0]:.0%}, which trades "
+      f"{unconstrained['turnover_per_year']:.3f} times a year and leaves "
+      f"{unconstrained['largest_end_weight_p95']:.0%} in one fund at the 95th percentile")
 
 band_table = pd.DataFrame([{"band": r["parameters"][0], "score": r["score"],
                             "median terminal": r["median_terminal"],
-                            "turnover a year": r["turnover_per_year"]} for r in band_rows])
+                            "turnover a year": r["turnover_per_year"],
+                            "largest weight, 95th": r["largest_end_weight_p95"],
+                            "keeps the mandate": r["feasible"]} for r in band_rows])
 print()
-print(band_table.to_string(index=False, float_format=lambda v: f"{v:,.2f}"))
+print(band_table.to_string(index=False, float_format=lambda v: f"{v:,.3f}"))
 """)
 
 code(r"""
@@ -495,6 +508,14 @@ results = pd.DataFrame(rows)
 print(results.to_string(index=False, float_format=lambda v: f"{v:,.3f}"))
 """)
 
+md(r"""
+The column to read first is not the objective but the last one. Doing nothing finishes with 59% of the portfolio in a single fund and 2.3 effective holdings, against the five holdings and the 35% cap it started with, so the policy that scores highest on the objective is also the one that has quietly stopped being the portfolio the client was sold. Rebalancing on a 5% band finishes at 32% and 4.4 effective holdings, which is the mandate intact.
+
+The objective ranks them the other way, and by a wide margin. Holding returns 15,771 against the band's $-12{,}598$, and a median terminal wealth of 471,725 against 385,631. That gap is the whole of the decision and section 6 prices it, because it is not a modelling artefact but a real cost of discipline in this sample.
+
+Two other rows are worth pausing on. Equal weights finishes at 297,977 with 82% of scenarios short of the target, which is the bar the course insists any method must clear, and every constructed portfolio here clears it comfortably. The re-solving model finishes lowest of all at 302,390 with 91% short, because the penalty its search selected under the mandate constraint holds volatility down to 8.8% and in a decade this strong that caution is expensive.
+""")
+
 code(r"""
 baseline_name = SPECS[0][0]
 rows = []
@@ -510,6 +531,12 @@ for name, kind, make, start in SPECS[1:]:
 paired = pd.DataFrame(rows)
 print(f"paired against: {baseline_name}")
 print(paired.to_string(index=False, float_format=lambda v: f"{v:,.2f}"))
+""")
+
+md(r"""
+Every interval here excludes zero, so none of these differences is simulation noise, which is what sharing the scenarios across policies buys. The band loses 28,370 of objective against doing nothing, with an interval of $[-30{,}202, -26{,}538]$, and it wins in only 4% of the five hundred scenarios.
+
+The two behavioural rules lose less than the disciplined one does, which looks wrong until the mechanism is read off the same table. Panic selling loses 13,243 while leaving the median terminal wealth exactly unchanged, because at a 15% trigger it fires in only a third of scenarios and the median scenario never reaches it, so the damage sits in the tail rather than in the middle of the distribution. Performance chasing loses 8,254 and 28,020 of median wealth while still beating the band, because tilting toward last year's winner is, in this sample, a weaker version of the same drift that doing nothing produces for free.
 """)
 
 code(r"""
@@ -532,6 +559,10 @@ plt.savefig("results/figures/fan.png", dpi=120)
 plt.show()
 """)
 
+md(r"""
+The two fans are drawn on the same vertical scale so the shapes can be compared directly. The band's is visibly narrower at every horizon and its upper edge is far lower, which is the same fact twice: restoring the target repeatedly sells whatever has just risen, and in a decade where the thing that rose kept rising, that is where the 86,000 of median terminal wealth went. The dashed line is the client's target, and the share of each fan finishing below it is the shortfall column of the table above.
+""")
+
 code(r"""
 start_concentration = float((target ** 2).sum())
 rows = []
@@ -545,6 +576,12 @@ for name, kind, make, start in SPECS:
                  "largest weight, worst scenario": weights_at_end.max()})
 drift = pd.DataFrame(rows)
 print(drift.to_string(index=False, float_format=lambda v: f"{v:.3f}"))
+""")
+
+md(r"""
+This is the table the recommendation turns on. Part 2 caps any single holding at 35%, and it imposes that cap once, at the moment the portfolio is built, while the objective never asks for it again, so nothing in the problem as posed prevents a policy from letting the weights drift straight through it.
+
+They do. Holding ends with a largest position of 59% on average and 88% in the worst of the five hundred scenarios, and equal weights, which never trades either, stays at 14% only because it started with twenty five equal holdings and no single fund can run away from the pack. The two behavioural rules end at 58% and 46%, so neither of them protects the mandate either. Only the band and the re-solving model finish inside the cap, at 32% each.
 """)
 
 code(r"""
@@ -562,6 +599,12 @@ for name in (SPECS[4][0], SPECS[5][0], SPECS[0][0]):
 behavioural = pd.DataFrame(rows)
 print(f"measured against: {disciplined}")
 print(behavioural.to_string(index=False, float_format=lambda v: f"{v:,.3f}"))
+""")
+
+md(r"""
+The brief asks for the cost of the client's tendencies as a change in median terminal wealth against disciplined rebalancing, and measured that way both tendencies come out ahead, at 112.9% and 116.8% of the disciplined median. Reporting that honestly matters more than reporting it comfortably, and the explanation is the one the drift table already gave: panic selling sits out of the market in a third of scenarios and otherwise does nothing, performance chasing tilts toward a winner that kept winning, and both of them spend most of their time letting the portfolio drift, which is what paid in this decade.
+
+The cost of the tendencies is real but it is not visible in the median against a disciplined benchmark. It appears in three other places. Against what the client would otherwise have done, which is to hold, both tendencies lose on the objective, by 13,243 and 8,254 with intervals that exclude zero. It appears in the tail rather than the middle, since panic selling leaves the median untouched while taking 45,000 off the fifth percentile. And it appears once the trigger is set where a nervous client would really set it, which the sensitivity table below shows.
 """)
 
 # =========================================================================== 5
@@ -594,6 +637,14 @@ print()
 print(equal_table.to_string(index=False, float_format=lambda v: f"{v:,.2f}"))
 """)
 
+md(r"""
+This is the experiment that tells us whether the ranking above is a property of the policies or of the decade. Every fund is given the same expected return, which removes a cross-sectional spread of 6.01% a year, while the covariance matrix and the month-to-month structure are left exactly as they were, so the scenarios differ from the main ones in one respect only: no fund carries a drift advantage over any other.
+
+The 28,370 that doing nothing was worth disappears completely. The band now sits 265 above it with an interval of $[-564, 1{,}095]$, which is to say the two are indistinguishable, and the re-solving model is likewise a tie at $-269$. Nothing here says rebalancing wins; it says the case against it was built entirely out of one decade's cross-section, and that with that cross-section removed discipline is free.
+
+Two differences survive the change. Panic selling still loses, by 970 with an interval of $[-1{,}467, -474]$, so its cost is a property of the rule rather than of the sample, which is what one would expect of a rule that sits out of the market at the worst moments. Equal weights still loses by 4,640, because with every mean equal the twenty five funds are no longer interchangeable on risk and the constrained portfolios are better diversified per unit of volatility.
+""")
+
 code(r"""
 rows = []
 for multiple in config.TARGET_MULTIPLES:
@@ -614,6 +665,12 @@ print("share of scenarios that miss the target")
 print(shortfall.to_string(float_format=lambda v: f"{v:.3f}"))
 """)
 
+md(r"""
+The target was chosen with the client and the report quotes three of them, because it is an input rather than a measurement and the brief allows either the initial wealth or a target the client names. Holding is the highest-scoring policy at all three, so the ranking is not an artefact of the particular target picked.
+
+What the target does change is whether loss aversion is doing anything at all. A reference at the 100,000 invested would be reached from below in none of the five hundred scenarios, so the loss arm of the value function would never activate and the $\lambda$ of 2.16 that the whole of Part 1 exists to measure would have no effect on any ranking. At twice the initial wealth the shortfall is still small enough that loss aversion barely registers, and only at four times does a third of the scenarios fall short and the parameter start to carry weight. That is why the report leads with the four-times target.
+""")
+
 code(r"""
 rows = []
 for d in config.PANIC_DRAWDOWN_GRID:
@@ -628,15 +685,51 @@ panic_table = pd.DataFrame(rows)
 print(panic_table.to_string(index=False, float_format=lambda v: f"{v:,.3f}"))
 """)
 
+md(r"""
+The trigger is the single most consequential number in the whole report and it is not one we measured, since the questionnaire detects the tendency without pinning the threshold. At 25% the rule fires in 2% of scenarios and costs nothing worth naming; at 15%, the value used above, it fires in a third; at 10% it fires in 89% and takes the median from 471,725 to 331,154.
+
+That last figure deserves to be set against the rebalancing question that occupies the rest of this report. Choosing to rebalance rather than hold costs about 86,000 of median wealth in this sample. A client whose real threshold is 10% rather than 15% loses about 141,000. The behaviour matters more than the policy, which is an uncomfortable conclusion for a report about policies and the right one to give the adviser.
+""")
+
 # =========================================================================== 6
 md(r"""
 <a id="s6"></a>
 
 ## 6. Recommendation to the client
 
+**Rebalance on a 5% band, and treat the trigger that would make you sell as the more urgent problem.**
+
+The honest starting point is that the objective prefers the opposite. Holding the Part 2 portfolio and never trading scores 15,771 against the band's $-12{,}598$ and finishes with a median wealth of 471,725 against 385,631, and the interval around that difference excludes zero, so it is not noise. A recommendation has to answer that, not step around it.
+
+It is answered by what the number leaves out. The portfolio was built under a constraint that no single fund exceed 35%, and that constraint was imposed once, when the portfolio was built, while the objective never asks for it again. Holding ends with 59% in one fund on average and 88% in the worst of five hundred scenarios, so the policy that wins the objective wins it by abandoning the mandate, and an adviser cannot put that in front of the client who was profiled for something else. Once the admissible policies are narrowed to those that keep the cap at the 95th percentile, the widest band that qualifies is 5%, and that is the recommendation.
+
+What it costs is 28,370 of objective and about 86,000 of median terminal wealth, and what it buys is a portfolio that ends with 4.4 effective holdings rather than 2.3, a largest position of 32% rather than 59%, and a worst fall along the way of 11.1% rather than 14.0%. The client should be shown that trade in those terms and allowed to decline it.
+
+Our confidence that the trade is worth taking rests on the robustness test rather than on the main table, because when every fund is given the same expected return the entire advantage of holding vanishes and the two policies become indistinguishable, at 265 with an interval of $[-564, 1{,}095]$. The case for doing nothing was built out of one decade's cross-sectional spread of 6.01% a year, and a client is being asked to bet the next decade on it repeating. Rebalancing is the policy that does not need that bet to pay.
+
+**What would change the recommendation.**
+
+If the client genuinely has no mandate, and is content to end with most of their wealth in whichever fund happened to run, then holding is the better policy on every number in this report and should be recommended instead. The cap is a constraint we were given, not a preference we measured, and a client who waives it is a different client.
+
+If the spread of expected returns across funds is believed to be much smaller than the 6.01% a year this sample showed, which is what the course's own treatment of estimation error would suggest, then the cost of rebalancing is close to zero and the case becomes one-sided.
+
+If the client's true panic threshold is nearer 10% than 15%, the advice changes shape entirely. At that trigger the rule fires in 89% of scenarios and costs about 141,000 of median wealth, which is more than the entire rebalancing decision is worth, so the adviser's effort belongs in pre-committing the client against selling rather than in choosing a band. That is the one recommendation in this report that does not depend on the sample, because panic selling is the only policy that still loses significantly when the drift advantage is removed.
+
 <a id="s7"></a>
 
 ## 7. Limitations
+
+**The scenarios inherit the sample they were drawn from.** The block bootstrap resamples the same 129 months used to estimate $\mu$ and $\Sigma$, so the expected returns inside the simulation are the sample's own, and no amount of simulation can reveal the estimation error that section 2.2 is about. Comparisons between policies remain valid, because every policy meets the same scenarios, while the level of terminal wealth is not a forecast: the median implies 16.6% a year, which is a description of 2016 to 2026 and not a projection of the next ten years.
+
+**Dependence longer than six months is destroyed.** Blocks of three to six months preserve whatever serial structure lives inside that window and nothing beyond it, so valuation-driven mean reversion over several years, if it exists, cannot appear in these scenarios. A policy that profits from it would be invisible here.
+
+**One cost model, and nothing else.** Ten basis points on every peso traded, no taxes, no bid-ask spread that widens when it matters, no contributions or withdrawals over ten years, and perfect divisibility. A real client's ten years contain all of these.
+
+**The profile is one administration.** The ten questions were answered once, with no repetition to check stability, and the course's own treatment notes that published loss-aversion estimates range from 1.4 to 3.0 partly because elicitation methods disagree. The ladder brackets the switch point rather than locating it, so this client's 2.16 is a bracket midpoint and a finer ladder would move it.
+
+**The re-solving policy never learns.** It solves with the moments estimated at time zero, which keeps it free of lookahead but also means it cannot react to anything the simulated decade reveals. A version that re-estimated from the path would be a different policy and might rank differently.
+
+**Two thresholds are ours.** The mandate is checked at the 95th percentile across scenarios rather than at the mean or the worst case, and the map from loss aversion to the risk aversion used in Part 2 runs linearly between two anchors we chose. Both are stated where they are used, and both move the answer.
 
 <a id="s8"></a>
 

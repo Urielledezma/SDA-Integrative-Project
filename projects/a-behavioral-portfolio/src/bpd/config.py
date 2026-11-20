@@ -36,15 +36,28 @@ GAMMA_PLUS = 0.61
 GAMMA_MINUS = 0.69
 
 # The same deck, page 24, reports that published loss aversion estimates run from
-# 1.4 to 3.0 across populations, stakes and elicitation methods, so an answer that
-# implies a value outside that range is reported as out of range rather than used.
+# 1.4 to 3.0 across populations, stakes and elicitation methods.  An elicited value
+# outside it is kept and flagged, since it describes an unusual client rather than an
+# impossible one, while the risk aversion of Part 2 is held at the nearer anchor.
 LAMBDA_RANGE = (1.4, 3.0)
+
+# OURS, not the course's: the course gives alpha = beta = 0.88 and notes only that
+# curvature is below one.  A floor of 0.5 keeps a client who names a very small
+# certainty equivalent from producing a value function so flat that the simulation
+# cannot tell two outcomes apart, and a ceiling of 1.0 rules out risk seeking over
+# gains, which the power form cannot represent together with the published arm.
 CURVATURE_RANGE = (0.5, 1.0)
 
 # The mixed lottery used to elicit loss aversion, which is the opening exercise of
 # that deck: heads you lose LOSS, tails you win G, and the smallest acceptable G
 # identifies lambda through lambda = G**alpha / LOSS**beta (page 11).
 ELICIT_LOSS = 1_000.0
+
+# The appendix of that deck, page 31, calls the estimate above biased, because it
+# sets both decision weights to one half when in fact they are 0.421 and 0.454, and
+# gives the corrected identity.  Applied by default: reporting a number the course
+# itself calls biased is not a position we could hold in a viva.
+CORRECT_LOSS_AVERSION = True
 
 # --- Portfolio construction --------------------------------------------------
 # Mean-variance in the utility form of deck "002 mean variance", page 6:
@@ -53,9 +66,16 @@ ELICIT_LOSS = 1_000.0
 # optimiser.  Deck "002 mean variance" page 27 shows that a binding long-only constraint
 # is algebraically a covariance shrinkage, and prescribes shrinking on purpose rather
 # than leaving it to the constraint, while page 20 reports that errors in means cost ten
-# times what errors in covariances cost.  The report shows the sensitivity to this value.
+# times what errors in covariances cost.  The amount is OURS: the deck says to shrink
+# deliberately and names no intensity, so the report shows the whole range from zero
+# to one and this is the midpoint of it.
 MU_SHRINK = 0.50
 
+# OURS, not the course's and not the brief's.  The brief fixes which constraints the
+# model carries and leaves their levels open, so these four are the advisory firm's
+# mandate: hold at most ten funds, take no position below 2% because a smaller one
+# cannot move the portfolio and still costs a trade, none above 35%, and no more than
+# 40% in any one asset class.  The report shows what the position cap does.
 K_MAX = 10
 MIN_POSITION = 0.02
 MAX_POSITION = 0.35
@@ -91,8 +111,12 @@ BAND_GRID = (0.01, 0.02, 0.03, 0.05, 0.08, 0.12, 0.20, 0.30, 0.50)
 RISK_PENALTY_GRID = (0.25, 0.5, 1.0, 3.0, 6.0, 10.0)
 RESOLVE_EVERY_GRID = (6, 12, 24)
 
-# Descriptive of the client rather than tuned, because the point of a behavioural policy
-# is to measure what the client's own tendency costs, not to make it perform well.
+# OURS, and descriptive rather than tuned.  No question in the instrument measures how
+# far a client lets a portfolio fall before selling or how hard they chase, so these are
+# plausible values rather than elicited ones, and the report varies each of them instead
+# of resting on the value below.  They are never tuned against the objective, because the
+# point of a behavioural policy is to measure what a tendency costs rather than to make
+# it perform well.
 PANIC_DRAWDOWN = 0.15
 PANIC_RECOVERY = 0.10
 PANIC_DRAWDOWN_GRID = (0.10, 0.15, 0.20, 0.25)

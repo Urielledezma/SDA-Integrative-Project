@@ -731,7 +731,7 @@ If the client genuinely has no mandate, and is content to end with most of their
 
 If the spread of expected returns across funds is believed to be much smaller than the 6.01% a year this sample showed, which is what the course's own treatment of estimation error would suggest, then the cost of rebalancing is close to zero and the case becomes one-sided.
 
-If the client's true panic threshold is nearer 10% than 15%, the advice changes shape entirely. At that trigger the rule fires in 89% of scenarios and costs about 141,000 of median wealth, which is more than the entire rebalancing decision is worth, so the adviser's effort belongs in pre-committing the client against selling rather than in choosing a band. That is the one recommendation in this report that does not depend on the sample, because panic selling is the only policy that still loses significantly when the drift advantage is removed.
+If the client's true panic threshold is nearer 10% than 15%, the advice changes shape entirely. At that trigger the rule fires in 89% of scenarios and takes the median from 471,725 to 331,154, a loss of 140,571 against holding, which is more than the entire rebalancing decision is worth, so the adviser's effort belongs in pre-committing the client against selling rather than in choosing a band. This is the part of the recommendation that survives the robustness test, because panic selling is one of only two policies that still loses significantly once the drift advantage is removed, the other being equal weights, and it is the only one of the two that describes something the client would actually do.
 
 <a id="s7"></a>
 

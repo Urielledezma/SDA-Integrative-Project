@@ -6,10 +6,12 @@ calls that second object "a MILP with knobs".  Page 22 adds that the rolling ver
 it is a CFA and DLA hybrid which collapses to the single-period CFA at horizon zero,
 which is the version used here.
 
-The two behavioural policies are PFAs in structure, since each is a threshold rule read
-off the state, and deck "005 SDA" page 27 makes exactly that point about the disposition
-effect: a behavioural regularity "maps a situation to a decision, and can therefore be
-written down and evaluated like any other rule".  What separates them from the PFA band
+The two behavioural policies are PFAs in structure: panic selling is a threshold rule and
+performance chasing is a linear-in-state tilt, both of which deck "007 Policy Classes"
+page 7 lists under that class.  Deck "005 SDA" page 27 licenses writing a behavioural
+regularity down at all, since it says one "maps a situation to a decision, and can
+therefore be written down and evaluated like any other rule", while the particular rules
+below are OURS and the deck does not specify them.  What separates them from the PFA band
 is purpose rather than form, because their parameters describe the client instead of
 being chosen to perform well, so they are never tuned against the objective.
 
@@ -40,9 +42,10 @@ def band_rebalance(target: np.ndarray, band: float):
     """PFA. Restore the target whenever any weight has drifted more than `band`.
 
     Tunable parameter: `band`, the half-width in weight fractions, which is the theta of
-    deck "007 Policy Classes" page 7 and the "Band of 2 points" row of deck "005 SDA"
-    page 7.  Trading restores every weight at once rather than only the offending one,
-    which is what that row does.
+    deck "007 Policy Classes" page 7, and the rule is the "Band of 2 points" row of deck
+    "005 SDA" page 7.  That row reports the cost and the volatility of such a band without
+    saying what it trades when it fires, so the choice to restore every weight at once
+    rather than only the offending one is OURS.
     """
     target = np.asarray(target, dtype=float)
 
@@ -60,7 +63,10 @@ def periodic_resolve(target: np.ndarray, mu, sigma, classes, risk_penalty: float
     """CFA. Re-solve the Part 2 model every `every` months with the trading cost inside it.
 
     Tunable parameters: `risk_penalty`, the theta_1 of deck "007 Policy Classes" page 9,
-    and `every`, the number of months between solves.  The penalty is tuned rather than
+    and `every`, the number of months between solves.  The deck writes that penalty on a
+    linearizable risk measure and offers mean absolute deviation as its example, while
+    this model keeps the quadratic variance of Part 2, so it is a model of the same family
+    rather than the deck's model exactly, and the difference is OURS.  The penalty is tuned rather than
     taken from the client's profile, because page 9 warns that a CFA is myopic by
     construction and its knobs "are the only channel through which the future enters, so
     they must be tuned, not guessed".
@@ -90,7 +96,8 @@ def panic_selling(target: np.ndarray, cash_index: int, drawdown: float, recovery
 
     Parameters describe the client rather than being tuned: `drawdown` is the fall from
     peak wealth that triggers the exit and `recovery` is the rise the market has to make
-    from its low before the client comes back.
+    from its low before the client comes back.  The brief names d and r and leaves the
+    mechanism open, so how the recovery is measured is OURS.
 
     The exit is read off the client's own wealth against its peak, which is the drawdown
     state the brief asks for.  The return has to be read off the market instead, because

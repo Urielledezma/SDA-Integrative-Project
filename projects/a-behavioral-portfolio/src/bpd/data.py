@@ -77,9 +77,12 @@ def equalise_means(rets: np.ndarray) -> np.ndarray:
     The covariance matrix and the month-to-month structure are untouched, so bootstrapping
     from this matrix produces scenarios that differ from the main ones in exactly one
     respect: no asset carries a drift advantage over any other.  It is the test of whether
-    a policy's ranking came from the policy or from the decade the sample covers, and it
-    is the course's own perturbation exercise of deck "002 mean variance" page 23 applied
-    to the whole cross-section at once rather than to one asset.
+    a policy's ranking came from the policy or from the decade the sample covers.
+
+    The test is OURS.  Deck "002 mean variance" page 23 perturbs one asset's mean by fifty
+    basis points and re-solves, which is a sensitivity of the optimiser to one input, while
+    this removes the cross-sectional spread entirely and asks a different question of the
+    policies rather than of the portfolio.
     """
     rets = np.asarray(rets, dtype=float)
     return rets - rets.mean(axis=0) + rets.mean()

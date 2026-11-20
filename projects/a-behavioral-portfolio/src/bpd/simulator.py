@@ -3,18 +3,21 @@
 Step 3 of the course's six-step process, in the notation of deck "005 SDA" page 15.
 
 State
-    S_t = (W_t, w_t, M_t, I_t, L_t, p_t, H_t)
-    W_t   wealth in dollars at the start of month t, a physical state
+    S_t = (W_t, w_t, M_t, I_t, H_t)
+    W_t   wealth in pesos at the start of month t, a physical state
     w_t   portfolio weights, dimensionless, non-negative and summing to one
-    M_t   the highest wealth reached up to month t, in dollars, which is what a
+    M_t   the highest wealth reached up to month t, in pesos, which is what a
           drawdown is measured against
-    I_t   the value of the target portfolio held without trading, in dollars, an
+    I_t   the value of the target portfolio held without trading, in pesos, an
           informational state carried because a client sitting in cash needs the
           market rather than their own wealth to tell them when to return
-    L_t   the lowest value I has taken since the client moved to cash, in dollars
-    p_t   one if the client is currently parked in cash, zero otherwise
     H_t   the last twelve months of asset returns, dimensionless, which is what a
           performance-chasing rule reads
+
+    A policy that needs more memory than this, such as the panic rule's record of
+    whether the client is currently in cash and how low the market went since, keeps
+    it inside itself rather than in S_t, and `run_policy` builds one policy per
+    scenario so that memory never crosses from one scenario to the next.
 
 Decision
     x_t = w_t^+ - w_t, the change in weights executed at the start of month t, so the
@@ -32,10 +35,10 @@ Transition function
     M_{t+1}  = max(M_t, W_{t+1})
     I_{t+1}  = I_t * (1 + w_target . r_{t+1})
 
-    Every dollar that changes hands pays the cost, so the charge is levied on
-    sum_i |x_i| rather than on the half of it that the course calls turnover; turnover in
-    the deck's own definition, one half of that sum, is reported separately so the two
-    conventions are never confused.
+    Every peso that changes hands pays the cost, so the charge is levied on sum_i |x_i|
+    rather than on the half of it that deck "002 mean variance" page 23 calls turnover.
+    That convention is OURS; turnover in the deck's definition, one half of that sum, is
+    reported separately so the two are never confused.
 
 Objective
     max over pi of E[ v(W_T - rho) ], with v the client's prospect-theory value function
@@ -59,8 +62,6 @@ def reference_wealth(reference: str, initial: float, target: float = None) -> fl
         if target is not None:
             return float(target)
         return float(initial * config.HEADLINE_TARGET_MULTIPLE)
-    if reference == "The highest value it ever reached":
-        return float(initial)
     return float(initial)
 
 

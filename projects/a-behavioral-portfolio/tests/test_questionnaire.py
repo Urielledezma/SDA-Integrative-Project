@@ -21,10 +21,23 @@ def test_the_quoted_client_recovers_the_published_curvatures():
     assert p.beta == pytest.approx(c.BETA_TK, abs=0.001)
 
 
-def test_the_quoted_clients_loss_aversion_is_the_ladder_midpoint():
+def test_the_quoted_clients_loss_aversion_is_the_corrected_ladder_midpoint():
+    from bpd import profile
     p = q.score(q.default_answers())
-    assert p.lam == pytest.approx((2_400.0 / 1_000.0) ** c.ALPHA_TK, abs=0.001)
-    assert 2.0 < p.lam < 2.3
+    ratio = profile.weight(0.5, c.GAMMA_PLUS) / profile.weight(0.5, c.GAMMA_MINUS)
+    assert p.lam == pytest.approx(ratio * (2_400.0 / 1_000.0) ** c.ALPHA_TK, abs=0.001)
+    assert 1.9 < p.lam < 2.1
+
+
+def test_question_five_offers_only_references_the_model_implements():
+    from bpd import simulator
+    q5 = next(item for item in q.QUESTIONS if item["id"] == "q5_reference")
+    for option in q5["options"]:
+        answers = dict(q.default_answers())
+        answers["q5_reference"] = option
+        reference = simulator.reference_wealth(option, 100_000.0)
+        assert reference > 0
+    assert len(set(simulator.reference_wealth(o, 100_000.0) for o in q5["options"])) == len(q5["options"])
 
 
 def test_a_recovered_curvature_round_trips_for_any_alpha():

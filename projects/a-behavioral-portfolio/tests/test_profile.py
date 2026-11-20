@@ -16,11 +16,13 @@ A = B = c.ALPHA_TK
 @pytest.mark.parametrize("gain, expected", [(1500, 1.43), (2000, 1.84),
                                             (2500, 2.24), (3000, 2.63)])
 def test_loss_aversion_matches_deck_page_11(gain, expected):
-    assert pf.loss_aversion_from_g(gain, A, B) == pytest.approx(expected, abs=0.005)
+    """The body table on page 11, which uses the uncorrected identity."""
+    assert pf.loss_aversion_from_g(gain, A, B, corrected=False) == pytest.approx(expected, abs=0.005)
 
 
 def test_published_lambda_implies_the_decks_indifference_gain():
-    assert pf.loss_aversion_from_g(2513, A, B) == pytest.approx(c.LAMBDA_TK, abs=0.005)
+    """Page 11: lambda = 2.25 corresponds to an indifference gain of about $2,513."""
+    assert pf.loss_aversion_from_g(2513, A, B, corrected=False) == pytest.approx(c.LAMBDA_TK, abs=0.005)
 
 
 @pytest.mark.parametrize("p, gamma, expected", [
@@ -85,3 +87,28 @@ def test_risk_aversion_rises_with_loss_aversion_and_stays_inside_the_anchors():
     assert pf.risk_aversion(1.0) == pytest.approx(c.GAMMA_AT_LAMBDA_LOW)
     assert pf.risk_aversion(5.0) == pytest.approx(c.GAMMA_AT_LAMBDA_HIGH)
     assert pf.risk_aversion(2.25) > pf.risk_aversion(1.8)
+
+
+# --- the appendix's correction, deck 003 page 31 ----------------------------
+
+def test_the_naive_estimator_reproduces_the_decks_body_table():
+    assert pf.loss_aversion_from_g(2500, A, B, corrected=False) == pytest.approx(2.24, abs=0.005)
+
+
+def test_the_corrected_estimator_reproduces_the_decks_appendix():
+    """Page 31: "For G = $2,500 this gives 2.08 rather than 2.24, about 7% lower"."""
+    assert pf.loss_aversion_from_g(2500, A, B, corrected=True) == pytest.approx(2.08, abs=0.006)
+
+
+def test_the_correction_is_the_ratio_of_the_two_decision_weights():
+    ratio = pf.weight(0.5, c.GAMMA_PLUS) / pf.weight(0.5, c.GAMMA_MINUS)
+    for gain in (1500.0, 2000.0, 2500.0, 3000.0):
+        naive = pf.loss_aversion_from_g(gain, A, B, corrected=False)
+        assert pf.loss_aversion_from_g(gain, A, B, corrected=True) == pytest.approx(naive * ratio)
+    assert 0.92 < ratio < 0.93
+
+
+def test_the_correction_lowers_the_estimate_by_about_seven_percent():
+    naive = pf.loss_aversion_from_g(2500, A, B, corrected=False)
+    corrected = pf.loss_aversion_from_g(2500, A, B, corrected=True)
+    assert 0.06 < (naive - corrected) / naive < 0.08

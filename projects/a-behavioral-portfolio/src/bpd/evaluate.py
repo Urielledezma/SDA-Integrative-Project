@@ -1,7 +1,7 @@
 """Step 6 of the six-step process: evaluating policies.
 
-Three rules are imposed here rather than left to the caller, because each one is a
-recurring error the course names.
+Three rules are imposed here rather than left to the caller.  The first is a recurring
+error the course names, the second is required by the brief, and the third is ours.
 
 Common random numbers.  Every policy in a comparison is run on the same array of
 scenarios, since deck "005 SDA" page 18 states that reusing the paths is what makes the
@@ -12,10 +12,12 @@ Separate seeds.  The scenarios used to tune a policy's parameters and the scenar
 to report its performance come from different seeds, so a parameter that happens to suit
 one set of draws cannot flatter itself on the same draws.
 
-Paired differences.  Because the scenarios are shared, a policy and its baseline are
-observed on the same draw, so the confidence interval that answers "is this policy
-better" is the one around the mean of the per-scenario difference, which is narrower than
-the interval around either mean and is the one reported.
+Paired differences, which is ours.  Because the scenarios are shared, a policy and its
+baseline are observed on the same draw, so the confidence interval that answers "is this
+policy better" is the one around the mean of the per-scenario difference.  That interval
+is narrower than the one around either mean whenever the two policies' outcomes are
+positively correlated across scenarios, which sharing the draws makes likely without
+guaranteeing it, and a test asserts the narrowing holds for the comparison reported.
 """
 import numpy as np
 
@@ -72,10 +74,13 @@ def mandate_is_kept(out, max_position: float, quantile: float = 95.0) -> bool:
     Part 2 caps any single holding, but it imposes that cap once, at the moment the
     portfolio is built.  Nothing in the objective asks for it to hold afterwards, so a
     policy is free to let the weights drift past it, and the drift costs nothing in a
-    sample where the asset that runs away is the one the optimiser already liked.  This
-    reads the cap as a standing constraint on the policy rather than a one-off
-    constraint on the portfolio, and checks it at a high quantile across scenarios
-    rather than on average, because a mandate that holds on average is not one.
+    sample where the asset that runs away is the one the optimiser already liked.
+
+    Reading that cap as a standing constraint on the policy is OURS: the brief imposes
+    it on the Part 2 portfolio and says nothing about the policies of Part 3.  The
+    quantile is ours too, and 95% was chosen because a mandate that holds on average is
+    not one, while requiring it in every scenario would admit only a rule that trades on
+    the cap itself rather than on drift from the target.
     """
     largest = np.asarray(out["terminal_weights"]).max(axis=1)
     return bool(np.percentile(largest, quantile) <= max_position)

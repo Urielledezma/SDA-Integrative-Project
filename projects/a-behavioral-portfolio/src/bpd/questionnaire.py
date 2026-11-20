@@ -3,8 +3,14 @@
 Questions 1 to 4 are preference elicitation and feed the three value-function
 parameters.  Question 5 fixes the reference point, which deck "003 Prospect Theory"
 page 24 calls an input rather than an output, so it has to be asked rather than
-estimated.  Questions 6 to 10 are the scenario questions that set the behavioural flags,
-and each one names the Part 3 policy it switches on.
+estimated.  Questions 6 to 10 are the scenario questions that set the behavioural flags.
+
+The flags describe the client and do not select which policies are simulated.  Part 3
+runs every policy for every client, because the client needs to see what a tendency
+would cost whether or not they admitted to it, and a comparison that dropped policies
+per client could not be read across clients.  Two of the five flags, panic selling and
+performance chasing, have a policy that measures them; the other three are reported to
+the client and are not costed, which the report says rather than implies.
 """
 from dataclasses import dataclass, field
 
@@ -38,8 +44,7 @@ QUESTIONS = [
     {"id": "q5_reference", "kind": "choice",
      "text": "Ten years from now, which number will you compare your portfolio against?",
      "options": ["The amount I started with",
-                 "A target I have in mind",
-                 "The highest value it ever reached"],
+                 "A target I have in mind"],
      "measures": "reference point"},
     {"id": "q6_drawdown", "kind": "choice",
      "text": "Your portfolio has fallen 20% in three months. What do you do?",
@@ -106,7 +111,7 @@ def _bracket_midpoint(accept_gain: float) -> float:
 
 
 def score(answers: dict) -> ClientProfile:
-    """Turn the ten answers into the parameters and flags Parts 2 and 3 consume."""
+    """Turn the ten answers into the parameters Part 2 consumes and the flags reported."""
     notes = []
     lo_c, hi_c = config.CURVATURE_RANGE
 

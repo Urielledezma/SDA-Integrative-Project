@@ -18,16 +18,23 @@ Engineering programme, ITESO — Universidad Jesuita de Guadalajara.
 
 The brief asks each team for one project, and **Project A is ours**, so the report, the
 dashboard and the presentation to look at are the ones in
-[`projects/a-behavioral-portfolio/`](projects/a-behavioral-portfolio). Projects B and C were
-built afterwards, on the same framework and to the same evaluation standard, because the
-team wanted the other two problem classes as well, and they are included here rather than
-withheld. Nothing in A depends on them.
+[`projects/a-behavioral-portfolio/`](projects/a-behavioral-portfolio). Project B was built
+afterwards, on the same framework and to the same evaluation standard, because the team
+wanted the revenue-management problem as well, and it is included here rather than
+withheld. Nothing in A depends on it.
 
 | Project | Client | Decision each period | Folder |
 |---|---|---|---|
 | **A. Behavioral portfolio dashboard** | Individual investor | The trades made each month | [`projects/a-behavioral-portfolio/`](projects/a-behavioral-portfolio) |
-| B. Dynamic ticket pricing | Event promoter | Today's price from the grid | `projects/b-dynamic-pricing/` |
-| C. University course scheduling | Department head | Weekly timetable adjustments | `projects/c-course-scheduling/` |
+| B. Dynamic ticket pricing | Event promoter | Today's price from the grid | [`projects/b-dynamic-pricing/`](projects/b-dynamic-pricing) |
+| C. University course scheduling | Department head | Weekly timetable adjustments | not attempted |
+
+**Project C was not attempted, and the reason belongs here rather than in a footnote.** The
+brief describes its department data and its enrollment generator as provided, and neither
+exists: the course materials contain no such files. Building it would have meant inventing
+twenty five courses, thirty seven sections, fourteen professors, ten rooms and five years of
+enrollment history, and then reporting results measured against a world we had made up. With
+one project graded and four days to the deadline, the team put the time into A instead.
 
 ---
 

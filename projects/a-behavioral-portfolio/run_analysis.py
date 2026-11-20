@@ -71,6 +71,12 @@ def main():
         print(line)
         log.append(line)
 
+    if args.quick or args.eval < config.N_EVAL:
+        say(f"SMOKE RUN on {args.eval} scenarios, which is fewer than the "
+            f"{config.N_EVAL} the brief requires. These numbers are for checking that "
+            f"the pipeline runs and must not be quoted anywhere.")
+        say("")
+
     rets, mu, sigma, classes, client, target, build_report = build()
     R = rets.to_numpy()
     reference = simulator.reference_wealth(client.reference, config.INITIAL_WEALTH)

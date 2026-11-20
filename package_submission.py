@@ -84,6 +84,13 @@ def main():
               or p.name in {"kaggle.json", "credentials.json"}]
     problems.extend(f"credential file would be shipped: {p}" for p in leaked)
 
+    # A smoke run writes the same filenames as the real evaluation, so the only thing
+    # standing between a quick check and a shipped table is this.
+    for summary in ROOT.glob("projects/*/results/summary.txt"):
+        if "SMOKE RUN" in summary.read_text(encoding="utf-8"):
+            problems.append(f"{summary.relative_to(ROOT).as_posix()} is from a smoke run, "
+                            f"so results/ holds numbers too small to report")
+
     print("checking the reports against what they computed")
     verify = subprocess.run([sys.executable, "verify_report.py"],
                             cwd=ROOT, capture_output=True, text=True)

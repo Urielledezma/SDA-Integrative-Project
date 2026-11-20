@@ -87,8 +87,10 @@ def simulate_path(policy, seed: int, capacity: int = None, days: int = None,
         state = {"seats": seats, "days_left": days - t, "reference": reference,
                  "capacity": capacity, "day": t,
                  "recent_sales": sold_path[max(0, t - 7):t]}
+        # Decision
         price = float(policy(t, state))
 
+        # Exogenous information
         elapsed = t / (days - 1) if days > 1 else 1.0
         rate = arrival_rate(elapsed, arrival_a, arrival_b)
         if seats < scarcity_share * capacity:
@@ -100,9 +102,13 @@ def simulate_path(policy, seed: int, capacity: int = None, days: int = None,
             wtp = rng.lognormal(np.log(wtp_median), wtp_log_sd, arrivals)
             sold = int(min(seats, int(buys(wtp, price, reference, eta, gamma).sum())))
 
+        # Metrics
         revenue += price * sold
+
+        # Transition function
         seats -= sold
         reference = theta * reference + (1.0 - theta) * price
+
         sold_path[t] = sold
         price_path[t] = price
         seats_path[t + 1] = seats

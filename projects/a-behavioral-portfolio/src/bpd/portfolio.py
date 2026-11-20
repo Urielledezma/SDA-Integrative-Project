@@ -98,11 +98,3 @@ def solve(mu, sigma, classes, risk_penalty: float, k_max: int = None,
         "gap": float(model.MIPGap) if model.SolCount else float("nan"),
     }
     return weights, report
-
-
-def equal_weight(n: int, k: int = None) -> np.ndarray:
-    """The naive portfolio, used as a reference point for the constructed one."""
-    k = n if k is None else k
-    w = np.zeros(n)
-    w[:k] = 1.0 / k
-    return w

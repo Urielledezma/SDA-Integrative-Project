@@ -94,8 +94,9 @@ def simulate_path(policy, returns: np.ndarray, target: np.ndarray,
 
     for t in range(horizon):
         state = {"wealth": wealth, "weights": weights, "peak": peak, "index": index,
-                 "history": returns[max(0, t - 12):t], "target": target}
+                 "history": returns[max(0, t - 12):t]}
 
+        # Decision
         desired = np.asarray(policy(t, state), dtype=float)
         traded = float(np.abs(desired - weights).sum())
         if traded > 1e-10:
@@ -106,12 +107,17 @@ def simulate_path(policy, returns: np.ndarray, target: np.ndarray,
             trades += 1
             weights = desired
 
+        # Exogenous information
         r = returns[t]
+
+        # Transition function
         growth = 1.0 + float(weights @ r)
         wealth *= growth
         weights = weights * (1.0 + r) / growth
         peak = max(peak, wealth)
         index *= 1.0 + float(target @ r)
+
+        # Metrics
         wealth_path[t + 1] = wealth
 
     running_peak = np.maximum.accumulate(wealth_path)

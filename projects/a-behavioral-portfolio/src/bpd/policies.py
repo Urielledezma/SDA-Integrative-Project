@@ -27,10 +27,10 @@ def buy_and_hold(target: np.ndarray):
     """Baseline. Hold the Part 2 portfolio and never trade, so the weights drift.
 
     Class: none, it is the do-nothing rule the brief asks for as the simple baseline, and
-    it is the "Hold, never trade" row of deck "005 SDA" page 7.
+    it is the "Hold, never trade" row of deck "005 SDA" page 7.  The target is taken as an
+    argument so that every policy is built the same way, and this one never reads it,
+    because holding means returning whatever the returns have left in place.
     """
-    target = np.asarray(target, dtype=float)
-
     def make():
         def policy(t, state):
             return state["weights"]

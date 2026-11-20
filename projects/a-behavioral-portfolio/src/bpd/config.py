@@ -131,7 +131,6 @@ PANIC_RECOVERY = 0.10
 PANIC_DRAWDOWN_GRID = (0.10, 0.15, 0.20, 0.25)
 CHASE_INTENSITY = 0.50
 CHASE_EVERY = 12
-CHASE_INTENSITY_GRID = (0.25, 0.50, 1.00)
 
 # --- Seeds and sample sizes --------------------------------------------------
 # The brief requires separate seeds for tuning and for the final evaluation, and the

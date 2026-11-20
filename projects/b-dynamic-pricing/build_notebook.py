@@ -359,13 +359,24 @@ The brief asks the dashboard to show how sensitive the results are to buyers com
 today's price with the one they remember. The parameter is $\eta$, the penalty on a price
 above the reference, and the table below re-runs every policy across a range of it on the
 same scenarios.
+
+It uses a subset of them. Four values of $\eta$ times three policies is twelve runs, and
+the lookahead solves a mixed-integer programme for every day of every scenario, so at the
+full sample this one table costs three times the comparison it is meant to test. A
+sensitivity has to show the direction and the rough size of an effect rather than a
+publishable interval, so it runs on the first 150 scenarios while the comparison above
+keeps all 500. Every figure in this section is therefore noisier than the ones above it,
+and none of them carries an interval for that reason.
 """)
 
 code(r"""
 rows = []
+sensitivity_seeds = eval_seeds[:config.N_SENSITIVITY]
+print(f"on {len(sensitivity_seeds)} of the {len(eval_seeds)} scenarios, because the "
+      f"lookahead solves a programme a day")
 for eta in (0.0, 0.3, 0.6, 1.0):
     for name, kind, make in SPECS:
-        out = simulator.run_policy(make, eval_seeds, eta=eta)
+        out = simulator.run_policy(make, sensitivity_seeds, eta=eta)
         rows.append({"eta": eta, "policy": name, "revenue": out["revenue"].mean(),
                      "sells out": out["sold_out"].mean()})
 sensitivity = pd.DataFrame(rows)

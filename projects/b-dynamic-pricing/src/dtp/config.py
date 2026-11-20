@@ -64,3 +64,9 @@ TUNE_SEED = 20261120
 EVAL_SEED = 20261124
 N_TUNE = 200
 N_EVAL = 500
+
+# The sensitivity table re-runs every policy at four values of eta, and the lookahead
+# solves a programme per day, so at the full sample it costs three times the headline
+# comparison. A sensitivity only has to show the direction and the rough size of an
+# effect, so it uses fewer scenarios and the report says which number is which.
+N_SENSITIVITY = 150

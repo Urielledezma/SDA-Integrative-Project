@@ -22,6 +22,11 @@ INCLUDE = [
     ".editorconfig", ".gitattributes",
 ]
 INCLUDE_TREES = ["projects"]
+
+# The brief asks for one project and A is it. Anything else in projects/ is additional
+# work, which is welcome in the zip when it is finished and must not hold up the
+# submission when it is not.
+SUBMISSION = "a-behavioral-portfolio"
 SKIP_PARTS = {".git", "__pycache__", ".pytest_cache", ".ipynb_checkpoints",
               ".playwright-cli", ".playwright", ".archives"}
 SKIP_SUFFIX = {".pyc", ".pyo"}
@@ -75,10 +80,25 @@ def main():
                 files.append(path)
 
     notebooks = [p for p in files if p.suffix == ".ipynb"]
-    if not notebooks:
-        problems.append("no report notebook found")
+    if not any(SUBMISSION in p.parts for p in notebooks):
+        problems.append(f"no report notebook found for {SUBMISSION}, which is the submission")
+
+    dropped = set()
     for path in notebooks:
-        problems.extend(check_notebook(path))
+        faults = check_notebook(path)
+        if not faults:
+            continue
+        if SUBMISSION in path.parts:
+            problems.extend(faults)
+        else:
+            # An unfinished extra is left out rather than shipped half-built, and the
+            # exclusion is announced rather than done quietly.
+            project_dir = next(p for p in path.parents if p.parent.name == "projects")
+            dropped.add(project_dir)
+            print(f"  LEAVING OUT {project_dir.name}: " + "; ".join(faults))
+    if dropped:
+        files = [f for f in files if not any(d in f.parents for d in dropped)]
+        print(f"  the zip will contain {SUBMISSION} and nothing else from projects/")
 
     leaked = [p for p in files if p.name == ".env" or p.name.startswith(".env.")
               or p.name in {"kaggle.json", "credentials.json"}]
@@ -92,15 +112,17 @@ def main():
                             f"so results/ holds numbers too small to report")
 
     print("checking the reports against what they computed")
-    verify = subprocess.run([sys.executable, "verify_report.py"],
-                            cwd=ROOT, capture_output=True, text=True)
+    verify = subprocess.run(
+        [sys.executable, "verify_report.py",
+         str(ROOT / "projects" / SUBMISSION / "A_behavioral_portfolio.ipynb")],
+        cwd=ROOT, capture_output=True, text=True)
     for line in (verify.stdout or "").strip().splitlines():
         print("  " + line)
     if verify.returncode != 0:
         problems.append("a report quotes figures its own cells did not print, "
                         "or was never executed; see verify_report.py above")
 
-    for script in sorted(ROOT.glob("projects/*/presentation_figures.py")):
+    for script in sorted((ROOT / "projects" / SUBMISSION).glob("presentation_figures.py")):
         check = subprocess.run([sys.executable, script.name], cwd=script.parent,
                                capture_output=True, text=True)
         if check.returncode != 0:
@@ -130,8 +152,12 @@ def main():
 
     size = out.stat().st_size / 1e6
     print(f"\nwrote {out.name}: {len(files)} files, {size:.1f} MB")
-    for path in notebooks:
+    # Report what went in, not what was considered. An earlier version printed the
+    # notebooks it had checked, which included one it had just excluded.
+    for path in [f for f in files if f.suffix == ".ipynb"]:
         print(f"  report included and executed: {path.relative_to(ROOT).as_posix()}")
+    for folder in sorted(dropped):
+        print(f"  left out, unfinished:         {folder.relative_to(ROOT).as_posix()}")
     return 0
 
 

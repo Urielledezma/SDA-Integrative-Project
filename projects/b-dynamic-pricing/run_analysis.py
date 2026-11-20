@@ -156,9 +156,12 @@ def main():
 
     # --- how sensitive is this to the reference-price effect? -----------------
     rows = []
+    sensitivity_seeds = eval_seeds[:min(len(eval_seeds), config.N_SENSITIVITY)]
+    say(f"sensitivity on {len(sensitivity_seeds)} of those scenarios, since the lookahead "
+        f"solves a programme a day and four values of eta cost three times the comparison")
     for eta in (0.0, 0.3, 0.6, 1.0):
         for name, kind, make in specs:
-            out = simulator.run_policy(make, eval_seeds, eta=eta)
+            out = simulator.run_policy(make, sensitivity_seeds, eta=eta)
             rows.append({"eta": eta, "policy": name,
                          "revenue": float(out["revenue"].mean()),
                          "sell_out_probability": float(out["sold_out"].mean())})

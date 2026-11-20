@@ -11,8 +11,8 @@ objective the course develops and audits while CVaR appears in none of its mater
 
 One model serves two purposes, which is deliberate.  With `w_prev` left out it builds the
 Part 2 portfolio.  With `w_prev` and a trading cost supplied it is the single-period
-rebalance of deck "007 Policy Classes" page 11, the one the deck calls a MILP with knobs,
-and page 22 notes that the rolling version collapses to exactly this at horizon zero.
+rebalance of deck "007 Policy Classes" page 9, the one the deck calls a MILP with knobs,
+and page 18 notes that the rolling version collapses to exactly this at horizon zero.
 The deck's cash-buffer knob is not included, because the brief fixes the weights to sum
 to one, so cash is held through the cash exchange traded fund in the universe instead.
 """

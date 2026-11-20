@@ -1,6 +1,6 @@
 """Step 5 of the six-step process: the policies, and the class each one belongs to.
 
-Deck "007 Policy Classes" page 6 places rebalancing bands and stop-loss rules in the PFA
+Deck "007 Policy Classes" page 5 places rebalancing bands and stop-loss rules in the PFA
 column and a myopic optimisation with tuned penalties in the CFA column, and page 11
 calls that second object "a MILP with knobs".  Page 22 adds that the rolling version of
 it is a CFA and DLA hybrid which collapses to the single-period CFA at horizon zero,
@@ -59,9 +59,9 @@ def periodic_resolve(target: np.ndarray, mu, sigma, classes, risk_penalty: float
                      every: int = 12, cost: float = None):
     """CFA. Re-solve the Part 2 model every `every` months with the trading cost inside it.
 
-    Tunable parameters: `risk_penalty`, the theta_1 of deck "007 Policy Classes" page 11,
+    Tunable parameters: `risk_penalty`, the theta_1 of deck "007 Policy Classes" page 9,
     and `every`, the number of months between solves.  The penalty is tuned rather than
-    taken from the client's profile, because page 11 warns that a CFA is myopic by
+    taken from the client's profile, because page 9 warns that a CFA is myopic by
     construction and its knobs "are the only channel through which the future enters, so
     they must be tuned, not guessed".
 

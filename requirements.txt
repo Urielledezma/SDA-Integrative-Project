@@ -1,0 +1,9 @@
+numpy>=2.0
+pandas>=2.2
+scipy>=1.13
+matplotlib>=3.9
+yfinance>=0.2.60
+gurobipy>=14.0
+streamlit>=1.40
+nbformat>=5.10
+pytest>=8.0

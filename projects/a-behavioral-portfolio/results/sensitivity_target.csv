@@ -1,19 +1,19 @@
 setting,value,policy,value_mean,rank
-target multiple,2.0,Buy and hold the Part 2 portfolio,65729.2980757958,1
-target multiple,2.0,"Performance chasing, intensity 0.5",59356.78553547605,2
-target multiple,2.0,Panic selling at 15%,57450.00161259122,3
-target multiple,2.0,"Band rebalancing, band 5%",45157.186048744385,4
-target multiple,2.0,"Re-solve every 12 months, penalty 6",26250.005585978673,5
-target multiple,2.0,Buy and hold equal weights,25455.919552265404,6
-target multiple,3.0,Buy and hold the Part 2 portfolio,43868.59599604909,1
-target multiple,3.0,"Performance chasing, intensity 0.5",36903.01258785333,2
-target multiple,3.0,Panic selling at 15%,33215.89479606529,3
-target multiple,3.0,"Band rebalancing, band 5%",21283.054212874144,4
-target multiple,3.0,"Re-solve every 12 months, penalty 6",-4654.885591803066,5
-target multiple,3.0,Buy and hold equal weights,-7300.712403275952,6
-target multiple,4.0,Buy and hold the Part 2 portfolio,15771.470024337772,1
-target multiple,4.0,"Performance chasing, intensity 0.5",7517.288355529199,2
-target multiple,4.0,Panic selling at 15%,2528.9068068826828,3
-target multiple,4.0,"Band rebalancing, band 5%",-12598.382987931749,4
-target multiple,4.0,Buy and hold equal weights,-49328.30353222044,5
-target multiple,4.0,"Re-solve every 12 months, penalty 6",-49929.80359059278,6
+target multiple,2.0,Buy and hold the Part 2 portfolio,70771.13892785365,1
+target multiple,2.0,"Re-solve every 6 months, penalty 0.5",65112.27285661301,2
+target multiple,2.0,"Performance chasing, intensity 0.5",64092.84832299349,3
+target multiple,2.0,Panic selling at 15%,60747.72620173099,4
+target multiple,2.0,"Band rebalancing, band 5%",48856.67518068536,5
+target multiple,2.0,Buy and hold equal weights,25584.905851189964,6
+target multiple,3.0,Buy and hold the Part 2 portfolio,49462.482037390364,1
+target multiple,3.0,"Re-solve every 6 months, penalty 0.5",43431.98014400563,2
+target multiple,3.0,"Performance chasing, intensity 0.5",42257.46826637499,3
+target multiple,3.0,Panic selling at 15%,37184.00219496904,4
+target multiple,3.0,"Band rebalancing, band 5%",25900.024843478706,5
+target multiple,3.0,Buy and hold equal weights,-5968.302461639038,6
+target multiple,4.0,Buy and hold the Part 2 portfolio,23129.47458728641,1
+target multiple,4.0,"Re-solve every 6 months, penalty 0.5",16745.4183556467,2
+target multiple,4.0,"Performance chasing, intensity 0.5",14909.060986534387,3
+target multiple,4.0,Panic selling at 15%,8081.246930963187,4
+target multiple,4.0,"Band rebalancing, band 5%",-5058.229493313116,5
+target multiple,4.0,Buy and hold equal weights,-45477.45589592485,6

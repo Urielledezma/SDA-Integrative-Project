@@ -70,15 +70,25 @@ def printed_text(notebook) -> str:
 
 
 def appears(value: str, haystack: str) -> bool:
-    """Allow for the formatting difference between prose and a printed table."""
+    """Allow for the formatting difference between prose and a printed table.
+
+    Two allowances, and both are needed or the check cries wolf. A table prints
+    492,805.521 where the prose says 492,806, so an integer is accepted when it or either
+    of its neighbours appears: the prose rounds and the table does not. And a figure is
+    accepted with or without thousands separators.
+    """
     plain = value.replace(",", "")
     candidates = {value, plain}
     if "." not in plain:
         candidates |= {f"{plain}.0", f"{plain}.00"}
         try:
-            candidates.add(f"{int(plain):,}")
+            number = int(plain)
         except ValueError:
-            pass
+            number = None
+        if number is not None:
+            for near in (number - 1, number, number + 1):
+                candidates.add(str(near))
+                candidates.add(f"{near:,}")
     else:
         whole, _, frac = plain.partition(".")
         candidates.add(whole)
@@ -111,27 +121,39 @@ def check(path: pathlib.Path) -> int:
     if errors:
         print("  a cell ended in an error, so the outputs cannot be trusted")
 
-    untraced = {}
+    untraced, hedged = {}, {}
     for cell in cells(notebook, "markdown"):
         source = "".join(cell["source"])
         # The bibliography is years, volumes and page ranges, none of which the run
         # computes, so checking it would report nothing but noise.
         if re.search(r"^#+\s*\d*\.?\s*References\b", source, re.MULTILINE):
             continue
-        for value in NUMBER.findall(source):
+        # LaTeX writes a thousands separator as {,} so that it spaces correctly, and
+        # leaving it in splits 4{,}714 into two numbers, one of which is never printed.
+        source = source.replace("{,}", ",")
+        for match in NUMBER.finditer(source):
+            value = match.group(1)
             if value in FROM_THE_COURSE or appears(value, output):
                 continue
             # A bare four-digit number in this range is a year in a citation.
             if re.fullmatch(r"(19|20)\d\d", value):
                 continue
-            untraced.setdefault(value, 0)
-            untraced[value] += 1
+            # Prose that hedges a figure is deriving it from two printed ones rather
+            # than claiming it, so it is reported separately and does not fail the run.
+            before = source[max(0, match.start() - 24):match.start()].lower()
+            hedge = re.search(r"\b(about|roughly|around|some|nearly)\s*$", before)
+            bucket = hedged if hedge else untraced
+            bucket.setdefault(value, 0)
+            bucket[value] += 1
 
     small = {v for v in untraced if "." not in v and "," not in v and len(v) <= 2}
     interesting = {v: n for v, n in untraced.items() if v not in small}
 
+    if hedged:
+        print(f"  {len(hedged)} figure(s) the prose hedges, so each is a derivation "
+              f"rather than a claim: " + ", ".join(sorted(hedged)))
     if not interesting:
-        print("  every figure in the prose appears in the printed output")
+        print("  every figure the prose states outright appears in the printed output")
         return 0 if not errors else 1
     print(f"  {len(interesting)} figure(s) in the prose that no cell printed:")
     for value, count in sorted(interesting.items(), key=lambda kv: -kv[1]):

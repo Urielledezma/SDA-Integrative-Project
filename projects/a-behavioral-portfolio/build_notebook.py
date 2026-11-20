@@ -535,7 +535,7 @@ print(results.to_string(index=False, float_format=lambda v: f"{v:,.3f}"))
 md(r"""
 The column to read first is not the objective but the effective holdings. The portfolio starts with 4.1 of them, and doing nothing finishes with 2.1, against the five holdings and the 35% cap it was built under, so the policy that scores highest on the objective is also the one that has quietly stopped being the portfolio the client was sold. Rebalancing on a 5% band finishes at 4.0, which is the mandate intact, and the re-solving model at 3.7.
 
-The objective ranks them the other way. Holding scores 23,129 against the band's $-5{,}058$, with a median terminal wealth of 492,806 against 405,091. That gap is the whole of the decision and section 6 prices it, because it is not a modelling artefact but a real cost of discipline in this sample.
+The objective ranks them the other way. Holding scores 23,129 against the band's $-5{,}058$, with a median terminal wealth of 492,805 against 405,091. That gap is the whole of the decision and section 6 prices it, because it is not a modelling artefact but a real cost of discipline in this sample.
 
 Equal weights finishes with the lowest median of all, 297,977, and misses the target in 82% of scenarios. It is the bar the course insists any method must clear before it earns attention, and every constructed portfolio clears it comfortably here.
 
@@ -560,13 +560,13 @@ print(paired.to_string(index=False, float_format=lambda v: f"{v:,.2f}"))
 """)
 
 md(r"""
-Every interval here excludes zero, so none of these differences is simulation noise, which is what sharing the scenarios across policies buys. The band loses 28,188 of objective against doing nothing, with an interval of $[-30{,}111, -26{,}264]$, and it wins in only 5% of the five hundred scenarios.
+Every interval here excludes zero, so none of these differences is simulation noise, which is what sharing the scenarios across policies buys. The band loses 28,187 of objective against doing nothing, with an interval of $[-30{,}111, -26{,}264]$, and it wins in only 5% of the five hundred scenarios.
 
 The re-solving model is the cheapest discipline on offer. It gives up 6,384 against doing nothing, with an interval of $[-8{,}055, -4{,}714]$, and wins in 41% of scenarios, which is a quarter of what the band gives up for a comparable hold on the largest position.
 
 The two behavioural rules lose less than the band does, which looks wrong until the mechanism is read off the same table. Performance chasing loses 8,220 of objective while still beating it, because tilting toward last year's winner is, in this sample, a weaker version of the same drift that doing nothing produces for free.
 
-Panic selling loses 15,048 of objective, and its entry needs care because two different quantities are easy to confuse here. The median of the per-scenario difference is far smaller than the difference of the medians, since a rule that never fires in most scenarios and fires hard in the rest shifts the tail without moving the middle. The fifth percentile shows where the damage sits: 218,950 against the baseline's 276,615.
+Panic selling loses 15,048 of objective, and its entry needs care because two different quantities are easy to confuse here. The median of the per-scenario difference is far smaller than the difference of the medians, since a rule that never fires in most scenarios and fires hard in the rest shifts the tail without moving the middle. The fifth percentile shows where the damage sits: 218,949 against the baseline's 276,615.
 """)
 
 code(r"""
@@ -642,7 +642,7 @@ print(behavioural.to_string(index=False, float_format=lambda v: f"{v:,.3f}"))
 md(r"""
 The brief asks for the cost of the client's tendencies as a change in median terminal wealth against disciplined rebalancing, and measured that way **both tendencies come out ahead** of the disciplined policy. Reporting that honestly matters more than reporting it comfortably, and the explanation is the one the drift table already gave: panic selling sits out of the market in a minority of scenarios and otherwise does nothing, performance chasing tilts toward a winner that kept winning, and both spend most of their time letting the portfolio drift, which is what paid in this decade.
 
-The cost of the tendencies is real, but it is not visible in the median against a disciplined benchmark. It appears in three other places. Against what the client would otherwise have done, which is to hold, both tendencies lose on the objective, by 15,048 and 8,220 with intervals that exclude zero. It appears in the tail rather than the middle, since panic selling takes the fifth percentile from 276,615 down to 218,950, a loss of about 57,700, while the middle of the paired difference barely moves. And it appears once the trigger is set where a nervous client would really set it, which the sensitivity table below shows.
+The cost of the tendencies is real, but it is not visible in the median against a disciplined benchmark. It appears in three other places. Against what the client would otherwise have done, which is to hold, both tendencies lose on the objective, by 15,048 and 8,220 with intervals that exclude zero. It appears in the tail rather than the middle, since panic selling takes the fifth percentile from 276,615 down to 218,949, a gap of about 57,700 that neither figure states on its own, while the middle of the paired difference barely moves. And it appears once the trigger is set where a nervous client would really set it, which the sensitivity table below shows.
 """)
 
 # =========================================================================== 5
@@ -678,9 +678,9 @@ print(equal_table.to_string(index=False, float_format=lambda v: f"{v:,.2f}"))
 md(r"""
 This is the experiment that tells us whether the ranking above is a property of the policies or of the decade. Every fund is given the same expected return, which removes a cross-sectional spread of 6.01% a year, while the covariance matrix and the month-to-month structure are left exactly as they were, so the scenarios differ from the main ones in one respect only: no fund carries a drift advantage over any other.
 
-The 28,188 that doing nothing was worth disappears completely. The band now sits 326 above it with an interval of $[-457, 1{,}109]$, which is to say the two are indistinguishable, while the re-solving model moves from second place to first and beats holding by 1,328 with an interval of $[77, 2{,}579]$ that excludes zero. Nothing here says the band wins; it says the case against discipline was built entirely out of one decade's cross-section, and that with that cross-section removed discipline is free and re-optimising is better than free.
+The 28,187 that doing nothing was worth disappears completely. The band now sits 326 above it with an interval of $[-456, 1{,}109]$, which is to say the two are indistinguishable, while the re-solving model moves from second place to first and beats holding by 1,328 with an interval of $[77, 2{,}579]$ that excludes zero. Nothing here says the band wins; it says the case against discipline was built entirely out of one decade's cross-section, and that with that cross-section removed discipline is free and re-optimising is better than free.
 
-Two policies still lose once the drift advantage is gone, and both significantly. Panic selling loses 1,301 with an interval of $[-1{,}890, -712]$, so its cost is a property of the rule rather than of the sample, which is what one would expect of a rule that sits out of the market at the worst moments. Equal weights loses 4,820. We did not test why, and the plausible reading, that spreading equally across twenty five funds is worse on risk than the constrained optimisation once no fund has a return advantage, is an inference rather than a result.
+Two policies still lose once the drift advantage is gone, and both significantly. Panic selling loses 1,300 with an interval of $[-1{,}890, -711]$, so its cost is a property of the rule rather than of the sample, which is what one would expect of a rule that sits out of the market at the worst moments. Equal weights loses 4,820. We did not test why, and the plausible reading, that spreading equally across twenty five funds is worse on risk than the constrained optimisation once no fund has a return advantage, is an inference rather than a result.
 """)
 
 code(r"""
@@ -724,7 +724,7 @@ print(panic_table.to_string(index=False, float_format=lambda v: f"{v:,.3f}"))
 """)
 
 md(r"""
-The trigger is the single most consequential number in the whole report and it is not one we measured, since the questionnaire detects the tendency without pinning the threshold. At 25% the rule fires in 2% of scenarios and costs nothing worth naming; at 15%, the value used above, it fires in a third; at 10% it fires in 89% and takes the median from 471,725 to 331,154.
+The trigger is the single most consequential number in the whole report and it is not one we measured, since the questionnaire detects the tendency without pinning the threshold. At 25% the rule fires in 2% of scenarios and costs nothing worth naming; at 15%, the value used above, it fires in 36% and the median is 455,183; at 10% it fires in 91% and the median falls to 335,867, against 492,805 for a client who never sells.
 
 That last figure deserves to be set against the rebalancing question that occupies the rest of this report, and the comparison has to be made against the same baseline on both sides or it means nothing. The table above gives what each trigger costs against holding, and the gap between a 15% trigger and a 10% one is larger than the gap between holding and the recommended band. Either way the behaviour matters more than the policy, which is an uncomfortable conclusion for a report about policies and the right one to give the adviser.
 """)
@@ -737,7 +737,7 @@ md(r"""
 
 **Re-solve the portfolio every six months, keep the 5% band as the simpler alternative, and treat the trigger that would make you sell as the more urgent problem of the three.**
 
-The honest starting point is that the objective prefers the opposite. Holding the Part 2 portfolio and never trading scores 23,129 against the band's $-5{,}058$ and finishes with a median wealth of 492,806 against 405,091, and the interval around that difference excludes zero, so it is not noise. A recommendation has to answer that, not step around it.
+The honest starting point is that the objective prefers the opposite. Holding the Part 2 portfolio and never trading scores 23,129 against the band's $-5{,}058$ and finishes with a median wealth of 492,805 against 405,091, and the interval around that difference excludes zero, so it is not noise. A recommendation has to answer that, not step around it.
 
 It is answered by what the number leaves out. The portfolio was built under a constraint that no single fund exceed 35%, and that constraint was imposed once, while the objective never asks for it again. Holding ends with 2.1 effective holdings against the 4.1 it started with, so the policy that wins the objective wins it by abandoning the mandate, and an adviser cannot put that in front of a client who was profiled for something else.
 
@@ -747,7 +747,7 @@ So the recommendation is the re-solving model, with the band as the simpler fall
 
 One figure is easy to misread. The worst fall reported in the table is the average across scenarios of each path's own largest fall, not the largest fall anywhere, which is deeper for every policy.
 
-Our confidence that the trade is worth taking rests on the robustness test rather than on the main table. When every fund is given the same expected return, the entire advantage of holding vanishes: the band becomes indistinguishable from it, at 326 with an interval of $[-457, 1{,}109]$, and the re-solving model beats it outright by 1,328 with an interval that excludes zero. The case for doing nothing was built out of one decade's cross-sectional spread of 6.01% a year, and a client is being asked to bet the next decade on it repeating. Re-optimising is the policy that does not need that bet to pay, and is the only one that is better off without it.
+Our confidence that the trade is worth taking rests on the robustness test rather than on the main table. When every fund is given the same expected return, the entire advantage of holding vanishes: the band becomes indistinguishable from it, at 326 with an interval of $[-456, 1{,}109]$, and the re-solving model beats it outright by 1,328 with an interval that excludes zero. The case for doing nothing was built out of one decade's cross-sectional spread of 6.01% a year, and a client is being asked to bet the next decade on it repeating. Re-optimising is the policy that does not need that bet to pay, and is the only one that is better off without it.
 
 **What would change the recommendation.**
 
@@ -755,13 +755,13 @@ If the client genuinely has no mandate, and is content to end with most of their
 
 If the spread of expected returns across funds is believed to be much smaller than the 6.01% a year this sample showed, which is what the course's own treatment of estimation error would suggest, then the cost of rebalancing is close to zero and the case becomes one-sided.
 
-If the client's true panic threshold is nearer 10% than 15%, the advice changes shape entirely. At that trigger the rule fires in 89% of scenarios and takes the median from 471,725 to 331,154, a loss of 140,571 against holding, which is more than the entire rebalancing decision is worth, so the adviser's effort belongs in pre-committing the client against selling rather than in choosing a band. This is the part of the recommendation that survives the robustness test, because panic selling is one of only two policies that still loses significantly once the drift advantage is removed, the other being equal weights, and it is the only one of the two that describes something the client would actually do.
+If the client's true panic threshold is nearer 10% than 15%, the advice changes shape entirely. At that trigger the rule fires in 91% of scenarios and takes the median to 335,867, against 492,805 for holding and 455,183 at the 15% trigger, which is a larger loss than the entire rebalancing decision is worth, so the adviser's effort belongs in pre-committing the client against selling rather than in choosing a band. This is the part of the recommendation that survives the robustness test, because panic selling is one of only two policies that still loses significantly once the drift advantage is removed, the other being equal weights, and it is the only one of the two that describes something the client would actually do.
 
 <a id="s7"></a>
 
 ## 7. Limitations
 
-**The scenarios inherit the sample they were drawn from.** The block bootstrap resamples the same 129 months used to estimate $\mu$ and $\Sigma$, so the expected returns inside the simulation are the sample's own, and no amount of simulation can reveal the estimation error that section 2.2 is about. Comparisons between policies remain valid, because every policy meets the same scenarios, while the level of terminal wealth is not a forecast: holding's median of 492,806 from 100,000 implies 17.3% a year and the recommended policy's 480,552 implies 17.0%, both of which describe 2016 to 2026 rather than the next ten years.
+**The scenarios inherit the sample they were drawn from.** The block bootstrap resamples the same 129 months used to estimate $\mu$ and $\Sigma$, so the expected returns inside the simulation are the sample's own, and no amount of simulation can reveal the estimation error that section 2.2 is about. Comparisons between policies remain valid, because every policy meets the same scenarios, while the level of terminal wealth is not a forecast: holding's median of 492,805 from 100,000 implies 17.3% a year and the recommended policy's 480,552 implies 17.0%, both of which describe 2016 to 2026 rather than the next ten years.
 
 **Dependence longer than six months is destroyed.** Blocks of three to six months preserve whatever serial structure lives inside that window and nothing beyond it, so valuation-driven mean reversion over several years, if it exists, cannot appear in these scenarios. A policy that profits from it would be invisible here.
 

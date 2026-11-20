@@ -1,48 +1,47 @@
-Restricted license - for non-production use only - expires 2028-11-29
 months of history      129  (2016-02-29 to 2026-10-31)
-client                 alpha 0.880  beta 0.880  lambda 2.161  gamma 6.75
+client                 alpha 0.880  beta 0.880  lambda 2.002  gamma 5.76
 reference point        A target I have in mind, 400,000
-Part 2 portfolio       5 holdings, expected 11.87% a year, volatility 9.11%
+Part 2 portfolio       5 holdings, expected 12.08% a year, volatility 9.47%
 
 tuning on 100 scenarios from seed 20261119
   PFA band               best 5% of 9 values tried, subject to keeping the 35% position cap
-                         without that constraint the search picks 50%, which trades 0.003 times a year and ends with 76% in one fund at the 95th percentile
+                         without that constraint the search picks 50%, which trades 0.003 times a year and ends with 79% in one fund at the 95th percentile
     band    score      median W   turnover   95th pct largest weight   keeps mandate
-       1%    -20,994       365,940      0.149                32.4%   yes
-       2%    -20,958       365,248      0.101                32.7%   yes
-       3%    -20,101       367,200      0.080                33.8%   yes
-       5%    -18,051       370,840      0.059                35.0%   yes
-       8%    -15,846       377,651      0.043                37.7%   no
-      12%    -13,146       383,049      0.034                40.6%   no
-      20%     -6,693       395,047      0.024                47.2%   no
-      30%      1,431       430,740      0.020                57.4%   no
-      50%     10,237       443,307      0.003                76.0%   no
-  CFA                    best penalty 6, every 12 months, of 18 combinations tried
+       1%    -12,798       377,208      0.152                36.2%   yes
+       2%    -12,705       377,112      0.104                36.5%   yes
+       3%    -11,824       379,787      0.085                37.0%   yes
+       5%    -10,178       382,841      0.061                38.5%   yes
+       8%     -8,040       392,872      0.045                41.0%   no
+      12%     -4,892       397,389      0.035                44.6%   no
+      20%        787       415,708      0.025                50.8%   no
+      30%      8,739       448,461      0.020                62.0%   no
+      50%     18,022       468,784      0.003                79.2%   no
+  CFA                    best penalty 0.5, every 6 months, of 18 combinations tried
 
 evaluating on 500 scenarios from seed 20261124, the same scenarios for every policy
 
 policy                                    class               E[v]   median W       5th      95th  short  maxDD   turn  1/HHI  max w
-Buy and hold the Part 2 portfolio         baseline          15,771    471,725   269,856   832,225   32%  14.0%   0.00    2.3   59%
-Buy and hold equal weights                baseline         -49,328    297,977   169,987   482,407   82%  17.6%   0.00   15.5   14%
-Band rebalancing, band 5%                 PFA              -12,598    385,631   258,082   581,498   54%  11.1%   0.06    4.4   32%
-Re-solve every 12 months, penalty 6       CFA              -49,930    302,390   218,324   422,949   91%   8.8%   0.05    4.5   32%
-Panic selling at 15%                      behavioural        2,529    435,337   224,277   799,587   41%  13.8%   0.12    2.3   58%
-Performance chasing, intensity 0.5        behavioural        7,517    450,398   254,303   749,555   37%  13.4%   0.18    3.1   46%
+Buy and hold the Part 2 portfolio         baseline          23,129    492,806   276,615   899,327   28%  14.5%   0.00    2.1   63%
+Buy and hold equal weights                baseline         -45,477    297,977   169,987   482,407   82%  17.6%   0.00   15.5   14%
+Band rebalancing, band 5%                 PFA               -5,058    405,091   265,706   616,863   47%  11.4%   0.06    4.0   35%
+Re-solve every 6 months, penalty 0.5      CFA               16,745    480,552   268,287   811,588   30%  15.7%   0.08    3.7   37%
+Panic selling at 15%                      behavioural        8,081    455,183   218,950   854,594   39%  14.2%   0.14    2.1   61%
+Performance chasing, intensity 0.5        behavioural       14,909    474,260   260,158   799,574   32%  13.9%   0.18    2.8   50%
 
 paired against the baseline, same scenarios on both sides
 policy                                           d E[v]                    95% CI   wins  d median W
-Buy and hold equal weights                      -65,100        [-67,322, -62,877]    1%    -175,584
-Band rebalancing, band 5%                       -28,370        [-30,202, -26,538]    4%     -78,267
-Re-solve every 12 months, penalty 6             -65,701        [-68,094, -63,309]    0%    -164,308
-Panic selling at 15%                            -13,243        [-15,535, -10,951]    1%           0
-Performance chasing, intensity 0.5               -8,254          [-9,716, -6,792]   28%     -28,020
+Buy and hold equal weights                      -68,607        [-70,922, -66,291]    1%    -196,728
+Band rebalancing, band 5%                       -28,188        [-30,111, -26,264]    5%     -83,970
+Re-solve every 6 months, penalty 0.5             -6,384          [-8,055, -4,714]   41%     -10,332
+Panic selling at 15%                            -15,048        [-17,474, -12,622]    1%           0
+Performance chasing, intensity 0.5               -8,220          [-9,671, -6,770]   28%     -28,640
 
 cost of behaviour against the disciplined policy, Band rebalancing, band 5%
-  Buy and hold the Part 2 portfolio               78,267   122.3% of its median
-  Buy and hold equal weights                     -87,983    77.3% of its median
-  Re-solve every 12 months, penalty 6            -84,666    78.4% of its median
-  Panic selling at 15%                            50,641   112.9% of its median
-  Performance chasing, intensity 0.5              57,011   116.8% of its median
+  Buy and hold the Part 2 portfolio               83,970   121.7% of its median
+  Buy and hold equal weights                    -106,483    73.6% of its median
+  Re-solve every 6 months, penalty 0.5            70,768   118.6% of its median
+  Panic selling at 15%                            50,886   112.4% of its median
+  Performance chasing, intensity 0.5              61,967   117.1% of its median
 
 target 2x initial wealth, reference 200,000: best is Buy and hold the Part 2 portfolio
 
@@ -51,30 +50,30 @@ target 3x initial wealth, reference 300,000: best is Buy and hold the Part 2 por
 target 4x initial wealth, reference 400,000: best is Buy and hold the Part 2 portfolio
 
 panic threshold sensitivity
-  drawdown 10%  fires in   89% of scenarios   median W     331,154   mean maxDD 12.7%
-  drawdown 15%  fires in   32% of scenarios   median W     435,337   mean maxDD 13.8%
-  drawdown 20%  fires in    8% of scenarios   median W     461,216   mean maxDD 14.0%
-  drawdown 25%  fires in    2% of scenarios   median W     470,904   mean maxDD 14.1%
+  drawdown 10%  fires in   91% of scenarios   median W     335,867   mean maxDD 13.0%
+  drawdown 15%  fires in   36% of scenarios   median W     455,183   mean maxDD 14.2%
+  drawdown 20%  fires in    9% of scenarios   median W     484,583   mean maxDD 14.5%
+  drawdown 25%  fires in    2% of scenarios   median W     488,266   mean maxDD 14.6%
 
 shrinkage sensitivity, buy and hold on each resulting portfolio
-  shrink 0.00  holdings  6  largest weight 35.0%  volatility 10.4%  median W     521,519
-  shrink 0.25  holdings  6  largest weight 35.0%  volatility  9.7%  median W     500,232
-  shrink 0.50  holdings  5  largest weight 30.4%  volatility  9.1%  median W     471,725
-  shrink 0.75  holdings  6  largest weight 35.0%  volatility  5.0%  median W     308,483
+  shrink 0.00  holdings  6  largest weight 35.0%  volatility 11.4%  median W     537,444
+  shrink 0.25  holdings  6  largest weight 35.0%  volatility  9.9%  median W     512,121
+  shrink 0.50  holdings  5  largest weight 34.1%  volatility  9.5%  median W     492,806
+  shrink 0.75  holdings  6  largest weight 35.0%  volatility  5.9%  median W     341,312
   shrink 1.00  holdings  9  largest weight 35.0%  volatility  2.7%  median W     178,947
 
 with every asset given the same expected return, the cross-sectional spread of 6.01% a year removed
-  Band rebalancing, band 5%                      -66,495    264,728   12.5%
-  Buy and hold the Part 2 portfolio              -66,760    262,472   12.9%
-  Re-solve every 12 months, penalty 6            -67,029    264,419    8.6%
-  Performance chasing, intensity 0.5             -67,309    260,210   13.6%
-  Panic selling at 15%                           -67,730    261,542   12.6%
-  Buy and hold equal weights                     -71,400    252,578   15.8%
+  Re-solve every 6 months, penalty 0.5           -59,971    265,165   19.2%
+  Band rebalancing, band 5%                      -60,974    265,892   13.1%
+  Buy and hold the Part 2 portfolio              -61,299    263,140   13.4%
+  Performance chasing, intensity 0.5             -61,809    261,136   14.2%
+  Panic selling at 15%                           -62,600    262,002   13.0%
+  Buy and hold equal weights                     -66,120    252,578   15.8%
   paired against the same baseline on these scenarios
-    Buy and hold equal weights                    -4,640   [-6,210, -3,071]   significant
-    Band rebalancing, band 5%                        265   [-564, 1,095]   not significant
-    Re-solve every 12 months, penalty 6             -269   [-1,172, 633]   not significant
-    Panic selling at 15%                            -970   [-1,467, -474]   significant
-    Performance chasing, intensity 0.5              -549   [-1,769, 670]   not significant
+    Buy and hold equal weights                    -4,820   [-6,322, -3,318]   significant
+    Band rebalancing, band 5%                        326   [-457, 1,109]   not significant
+    Re-solve every 6 months, penalty 0.5           1,328   [77, 2,579]   significant
+    Panic selling at 15%                          -1,301   [-1,890, -712]   significant
+    Performance chasing, intensity 0.5              -509   [-1,687, 669]   not significant
 
-ran in 340 s
+ran in 442 s

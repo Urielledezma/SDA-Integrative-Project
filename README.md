@@ -51,6 +51,15 @@ streamlit run projects/a-behavioral-portfolio/app.py
 Each project's own README gives the commands that regenerate its tables and re-execute its
 report from a clean kernel.
 
+The submission zip is built by a script rather than by hand:
+
+```bash
+python package_submission.py
+```
+
+It refuses to build one if a report notebook was never executed, if any cell ended in an
+error, if the tests do not pass, or if a credential file would be shipped.
+
 ---
 
 ## Conventions

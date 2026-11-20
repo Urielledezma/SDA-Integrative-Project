@@ -71,7 +71,7 @@ md(r"""
 
 An advisory firm wants to tell a client three things at once: what kind of risk taker they are, what portfolio that implies, and what their own habits will cost them if they keep them. The first is a measurement problem, the second an optimisation problem, and the third a sequential decision problem, and this report does them in that order because each one feeds the next.
 
-The measurement is ten questions whose answers identify the three parameters of a prospect-theory value function. The optimisation is a mixed-integer programme that picks at most ten funds out of twenty five subject to minimum lots and a cap on each asset class, and whose risk aversion is set by the client's own loss aversion. The decision problem is ten years of months in which six policies, two of them written to imitate the client rather than to help them, are run over the same simulated scenarios so that any difference between them is the policy and not the draw.
+The measurement is ten questions whose answers identify the three parameters of a prospect-theory value function, using the corrected estimator the course's own appendix gives rather than the one its body page uses. The optimisation is a mixed-integer programme that picks at most ten funds out of twenty five subject to minimum lots and a cap on each asset class, and whose risk aversion is set by the client's own loss aversion. The decision problem is ten years of months in which six policies, two of them written to imitate the client rather than to help them, are run over the same simulated scenarios so that any difference between them is the policy and not the draw.
 """)
 
 code(r"""
@@ -112,7 +112,7 @@ Ten questions. The first four are lotteries whose answers identify the value fun
 
 The lottery used for loss aversion is the opening exercise of the course's prospect-theory lecture, a fair coin that loses a thousand pesos on heads and pays an unknown gain on tails, and the client is asked for the smallest gain at which they would take it. We put the question as a ladder of concrete bets rather than as an open number, which is a design choice of ours and not one the course makes: the lecture asks for the number directly. The consequence is measurable rather than psychological, since a ladder brackets the switch point instead of locating it, so the midpoint of the bracket is used and the estimate inherits the spacing of the rungs.
 
-**The client quoted throughout this report is a constructed example, not a person who was interviewed.** The three certainty equivalents are the exact inversions of the curvature formula at the published 0.88, so the curvatures come back at 0.88 by construction, the ladder answer of 2,600 brackets to 2,400 and gives a loss aversion of 2.16, and every behavioural flag is set on purpose so that the policies of Part 3 have something to act on. A real client would produce different numbers and the dashboard exists so that they can.
+**The client quoted throughout this report is a constructed example, not a person who was interviewed.** The three certainty equivalents are the exact inversions of the curvature formula at the published 0.88, so the curvatures come back at 0.88 by construction. The ladder answer of 2,600 brackets to 2,400, which gives 2.16 on the body's formula and **2.00 once the appendix's correction is applied**, and every behavioural flag is set on purpose so that the policies of Part 3 have something to act on. A real client would produce different numbers and the dashboard exists so that they can.
 """)
 
 code(r"""
@@ -126,17 +126,32 @@ md(r"""
 
 ### 1.2 What the estimators are, and why in that order
 
-The three parameters are identified in the order $\beta$, $\alpha$, $\lambda$, and the order is forced by the algebra rather than chosen for convenience.
+The three parameters are identified in the order $\beta$, $\alpha$, $\lambda$. Only the last position is forced by the algebra; the two curvatures could be taken in either order, and they are taken from their own arms for clarity rather than from necessity.
 
 A loss-only lottery paying nothing or $-X$ with equal probability has prospect-theory value $-\tfrac{1}{2}\lambda X^{\beta}$, and the certain loss $c$ the client would accept instead satisfies $-\lambda c^{\beta} = -\tfrac{1}{2}\lambda X^{\beta}$. Loss aversion appears on both sides and cancels, which leaves $\beta = \ln(0.5) / \ln(c/X)$ and identifies curvature over losses without knowing $\lambda$ at all. The gain-only lottery gives $\alpha$ the same way. Only then does the mixed lottery identify loss aversion, through $\tfrac{1}{2} G^{\alpha} = \tfrac{1}{2}\lambda L^{\beta}$, so that $\lambda = G^{\alpha} / L^{\beta}$, which at $\alpha = \beta = 0.88$ and $L = 1000$ is the course's own $\hat\lambda = (G/1000)^{0.88}$.
 
-Probabilities enter raw rather than weighted, which is what the lecture does when it writes that indifference condition with one half on both sides. The weighting function is still reported, as a diagnostic that tells the client how far their treatment of a stated probability departs from the probability itself, but it is kept out of the estimator so that the estimator remains the one the course derived.
+The lecture writes that indifference condition with one half on both sides, and its appendix then withdraws it. Page 31 says plainly that the estimate so obtained **is biased**, because the two decision weights are not equal at a half: $w^{+}(0.5) = 0.421$ against $w^{-}(0.5) = 0.454$. The corrected identity multiplies by their ratio,
+
+$$
+\hat\lambda \;=\; \frac{w^{+}(0.5)}{w^{-}(0.5)} \cdot \frac{G^{\alpha}}{L^{\beta}},
+$$
+
+which is about 7% lower, and the appendix's own worked case has $G = 2{,}500$ giving 2.08 rather than 2.24. We apply the correction, because quoting the figure the course itself calls biased would be the first thing worth attacking in this report. Both values are computed below so the size of the correction is visible rather than buried.
+
+The same appendix adds the limitation that no amount of arithmetic removes: loss aversion and probability weighting are not separately identified from a single indifference, so any measured $\lambda$ carries assumptions about $w$, and any measured $w$ carries assumptions about $\alpha$. It notes that a trade-off ladder which cancels $w$ before estimating $v$ is what a serious elicitation uses. Ours is a ladder, but it brackets the switch point rather than cancelling the weights, so it does not buy that property and this report does not claim it.
 """)
 
 code(r"""
 answers = questionnaire.default_answers()
 client = questionnaire.score(answers)
 
+gain = questionnaire._bracket_midpoint(answers["q1_ladder"])
+naive = profile.loss_aversion_from_g(gain, client.alpha, client.beta, corrected=False)
+print(f"ladder answer {answers['q1_ladder']:,.0f}, bracket midpoint {gain:,.0f}")
+print(f"lambda uncorrected {naive:.3f}   the deck's body formula")
+print(f"lambda corrected   {client.lam:.3f}   the appendix's, lower by "
+      f"{100 * (naive - client.lam) / naive:.1f}%")
+print()
 print(f"alpha  {client.alpha:.3f}   curvature over gains")
 print(f"beta   {client.beta:.3f}   curvature over losses")
 print(f"lambda {client.lam:.3f}   loss aversion")
@@ -176,17 +191,18 @@ md(r"""
 
 ### 1.3 Checking the implementation against the course's own numbers
 
-An estimator that is wrong in the third decimal still produces a confident profile, so the implementation is checked against values that were published before we wrote it. The table below reproduces the loss-aversion ladder, the decision weights and the worked examples from the course's prospect-theory lecture, and the test suite asserts every one of them.
+An estimator that is wrong in the third decimal still produces a confident profile, so the implementation is checked against values that were published before we wrote it. The table below reproduces the loss-aversion ladder, the decision weights and the worked examples from the course's prospect-theory lecture, including both the body's estimate of 2.24 and the appendix's corrected 2.08 for the same answer, and the test suite asserts every one of them.
 """)
 
 code(r"""
 A = B = config.ALPHA_TK
+naive = lambda g: profile.loss_aversion_from_g(g, A, B, corrected=False)
 checks = [
-    ("lambda at G = 1500", profile.loss_aversion_from_g(1500, A, B), 1.43),
-    ("lambda at G = 2000", profile.loss_aversion_from_g(2000, A, B), 1.84),
-    ("lambda at G = 2500", profile.loss_aversion_from_g(2500, A, B), 2.24),
-    ("lambda at G = 3000", profile.loss_aversion_from_g(3000, A, B), 2.63),
-    ("lambda at G = 2513", profile.loss_aversion_from_g(2513, A, B), 2.25),
+    ("lambda at G = 1500, body", naive(1500), 1.43),
+    ("lambda at G = 2000, body", naive(2000), 1.84),
+    ("lambda at G = 2500, body", naive(2500), 2.24),
+    ("lambda at G = 3000, body", naive(3000), 2.63),
+    ("lambda at G = 2513, body", naive(2513), 2.25),
     ("w+(0.50)", profile.weight(0.50, config.GAMMA_PLUS), 0.421),
     ("w-(0.50)", profile.weight(0.50, config.GAMMA_MINUS), 0.454),
     ("w+(0.10)", profile.weight(0.10, config.GAMMA_PLUS), 0.186),
@@ -195,6 +211,8 @@ checks = [
     ("half of v(-800)", 0.5 * profile.value(-800, A, B, 2.25), -403.5),
     ("note: v(-20,000)", profile.value(-20_000, A, B, 2.25), -13_712),
     ("note: v(+25,000)", profile.value(25_000, A, B, 2.25), 7_416),
+    ("lambda at G = 2500, body", profile.loss_aversion_from_g(2500, A, B, corrected=False), 2.24),
+    ("lambda at G = 2500, appendix", profile.loss_aversion_from_g(2500, A, B, corrected=True), 2.08),
 ]
 rows = [{"quantity": name, "ours": value, "course": published,
          "agrees": abs(value - published) <= max(0.005, abs(published) * 0.0005)}
@@ -513,15 +531,13 @@ print(results.to_string(index=False, float_format=lambda v: f"{v:,.3f}"))
 """)
 
 md(r"""
-The column to read first is not the objective but the last one. Doing nothing finishes with 59% of the portfolio in a single fund and 2.3 effective holdings, against the five holdings and the 35% cap it started with, so the policy that scores highest on the objective is also the one that has quietly stopped being the portfolio the client was sold. Rebalancing on a 5% band finishes at 32% and 4.4 effective holdings, which is the mandate intact.
+The column to read first is not the objective but the effective holdings. The portfolio starts with 4.1 of them, and doing nothing finishes with 2.1, against the five holdings and the 35% cap it was built under, so the policy that scores highest on the objective is also the one that has quietly stopped being the portfolio the client was sold. Rebalancing on a 5% band finishes at 4.0, which is the mandate intact, and the re-solving model at 3.7.
 
-The objective ranks them the other way, and by a wide margin. Holding returns 15,771 against the band's $-12{,}598$, and a median terminal wealth of 471,725 against 385,631. That gap is the whole of the decision and section 6 prices it, because it is not a modelling artefact but a real cost of discipline in this sample.
+The objective ranks them the other way. Holding scores 23,129 against the band's $-5{,}058$, with a median terminal wealth of 492,806 against 405,091. That gap is the whole of the decision and section 6 prices it, because it is not a modelling artefact but a real cost of discipline in this sample.
 
-Two other rows are worth pausing on, and both need their statistic named, because the ranking changes depending on which one is read.
+Equal weights finishes with the lowest median of all, 297,977, and misses the target in 82% of scenarios. It is the bar the course insists any method must clear before it earns attention, and every constructed portfolio clears it comfortably here.
 
-Equal weights finishes with the lowest median of all, 297,977, and misses the target in 82% of scenarios. It is the bar the course insists any method must clear before it earns attention, and every constructed portfolio clears it on the median, although the re-solving model clears it by only 1.5%.
-
-The re-solving model is the lowest on the objective, at $-49{,}930$ against equal weights' $-49{,}328$, while its median of 302,390 is the second lowest rather than the lowest. It misses the target in 91% of scenarios. The reason is the penalty its search selected under the mandate constraint, which produces the most cautious portfolio of the six: its mean worst fall is 8.8%, the smallest in the table, and in a decade this strong that caution is expensive.
+The re-solving model comes second on the objective, at 16,745 against holding's 23,129, with a median of 480,552. Its search settled on a six-month interval and the lightest risk penalty on the grid that still keeps the mandate, so it trades often enough to hold the largest position near where it started while giving up far less than the band does.
 """)
 
 code(r"""
@@ -542,11 +558,13 @@ print(paired.to_string(index=False, float_format=lambda v: f"{v:,.2f}"))
 """)
 
 md(r"""
-Every interval here excludes zero, so none of these differences is simulation noise, which is what sharing the scenarios across policies buys. The band loses 28,370 of objective against doing nothing, with an interval of $[-30{,}202, -26{,}538]$, and it wins in only 4% of the five hundred scenarios.
+Every interval here excludes zero, so none of these differences is simulation noise, which is what sharing the scenarios across policies buys. The band loses 28,188 of objective against doing nothing, with an interval of $[-30{,}111, -26{,}264]$, and it wins in only 5% of the five hundred scenarios.
 
-The two behavioural rules lose less than the disciplined one does, which looks wrong until the mechanism is read off the same table. Performance chasing loses 8,254 of objective and 28,020 on the median of the paired difference while still beating the band, because tilting toward last year's winner is, in this sample, a weaker version of the same drift that doing nothing produces for free.
+The re-solving model is the cheapest discipline on offer. It gives up 6,384 against doing nothing, with an interval of $[-8{,}055, -4{,}714]$, and wins in 41% of scenarios, which is a quarter of what the band gives up for a comparable hold on the largest position.
 
-Panic selling loses 13,243 of objective, and its entry in the last column needs care because two different quantities are easy to confuse here. The median of the per-scenario difference is zero, which says that in more than half the scenarios the rule never fires and the two policies end identically. The difference of the medians is not zero: the main table gives 435,337 against 471,725, a gap of about 36,400. Both statements are true and they describe different things, since a rule that does nothing in two thirds of scenarios and a great deal in the rest shifts the distribution without moving the middle of the paired difference. The damage is therefore concentrated in the tail, and the fifth percentile shows it, at 224,277 against the baseline's 269,856.
+The two behavioural rules lose less than the band does, which looks wrong until the mechanism is read off the same table. Performance chasing loses 8,220 of objective while still beating it, because tilting toward last year's winner is, in this sample, a weaker version of the same drift that doing nothing produces for free.
+
+Panic selling loses 15,048 of objective, and its entry needs care because two different quantities are easy to confuse here. The median of the per-scenario difference is far smaller than the difference of the medians, since a rule that never fires in most scenarios and fires hard in the rest shifts the tail without moving the middle. The fifth percentile shows where the damage sits: 218,950 against the baseline's 276,615.
 """)
 
 code(r"""
@@ -570,7 +588,7 @@ plt.show()
 """)
 
 md(r"""
-The two fans are drawn on the same vertical scale so the shapes can be compared directly. The band's is visibly narrower at every horizon and its upper edge is far lower, which is the same fact twice: restoring the target repeatedly sells whatever has just risen, and in a decade where the thing that rose kept rising, that is where the 86,000 of median terminal wealth went. The dashed line is the client's target, and the share of each fan finishing below it is the shortfall column of the table above.
+The two fans are drawn on the same vertical scale so the shapes can be compared directly. The band's is visibly narrower at every horizon and its upper edge is far lower, which is the same fact twice: restoring the target repeatedly sells whatever has just risen, and in a decade where the thing that rose kept rising, that is where the difference in median terminal wealth went. The dashed line is the client's target, and the share of each fan finishing below it is the shortfall column of the table above.
 """)
 
 code(r"""
@@ -595,9 +613,11 @@ print(f"\nthe Part 2 cap on any single holding is {config.MAX_POSITION:.0%}")
 md(r"""
 This is the table the recommendation turns on. Part 2 caps any single holding at 35%, and it imposes that cap once, at the moment the portfolio is built, while the objective never asks for it again, so nothing in the problem as posed prevents a policy from letting the weights drift straight through it.
 
-They do. Holding ends with a largest position of 59% on average and 88% in the worst of the five hundred scenarios, and equal weights, which never trades either, stays at 14% only because it started with twenty five equal holdings and no single fund can run away from the pack. The two behavioural rules end at 58% and 46%, so neither of them protects the mandate either.
+They do. The portfolio is built with 4.1 effective holdings and a largest position of 34%, a single point inside the cap. Holding ends at 2.1 effective holdings, and equal weights, which never trades either, keeps 15.5 only because it started with twenty five equal holdings and no single fund can run away from the pack. The two behavioural rules end at 2.1 and 2.9, so neither of them protects the mandate.
 
-The band and the re-solving model are the two that hold it, and the column to read is the 95th percentile rather than the mean or the worst case. Both average 32%, both keep the 95th percentile at or inside 35%, and both still breach the cap in their worst scenarios, at 40% and 39%. That is a consequence of how the constraint was written and not an oversight: the search was restricted to settings that keep the cap at the 95th percentile across scenarios, so one scenario in twenty is expected to end outside it. A promise that no scenario ever breaches would need a rule that trades on the cap itself rather than on drift from the target, which is a different policy than the brief asks for.
+The band and the re-solving model are the two that hold it, at 4.0 and 3.7 effective holdings, and the column to read is the 95th percentile of the largest weight rather than its mean or its worst case.
+
+No policy keeps the largest holding under 35% outright, and none can. The optimiser places the portfolio within a point of the cap to begin with, and weights move between the dates a policy acts, so a test for never exceeding the cap would reject a rule that rebalances every month along with one that never does. What a policy can control is the overshoot, and the admissible ones are those that keep the largest holding within five percentage points of the cap at the 95th percentile. That bound is ours and section 7 lists it with the other decisions of the same kind.
 """)
 
 code(r"""
@@ -618,9 +638,9 @@ print(behavioural.to_string(index=False, float_format=lambda v: f"{v:,.3f}"))
 """)
 
 md(r"""
-The brief asks for the cost of the client's tendencies as a change in median terminal wealth against disciplined rebalancing, and measured that way both tendencies come out ahead, at 112.9% and 116.8% of the disciplined median. Reporting that honestly matters more than reporting it comfortably, and the explanation is the one the drift table already gave: panic selling sits out of the market in a third of scenarios and otherwise does nothing, performance chasing tilts toward a winner that kept winning, and both of them spend most of their time letting the portfolio drift, which is what paid in this decade.
+The brief asks for the cost of the client's tendencies as a change in median terminal wealth against disciplined rebalancing, and measured that way **both tendencies come out ahead** of the disciplined policy. Reporting that honestly matters more than reporting it comfortably, and the explanation is the one the drift table already gave: panic selling sits out of the market in a minority of scenarios and otherwise does nothing, performance chasing tilts toward a winner that kept winning, and both spend most of their time letting the portfolio drift, which is what paid in this decade.
 
-The cost of the tendencies is real but it is not visible in the median against a disciplined benchmark. It appears in three other places. Against what the client would otherwise have done, which is to hold, both tendencies lose on the objective, by 13,243 and 8,254 with intervals that exclude zero. It appears in the tail rather than the middle, since panic selling takes the fifth percentile from 269,856 down to 224,277, a loss of about 45,600, while the middle of the paired difference does not move at all. And it appears once the trigger is set where a nervous client would really set it, which the sensitivity table below shows.
+The cost of the tendencies is real, but it is not visible in the median against a disciplined benchmark. It appears in three other places. Against what the client would otherwise have done, which is to hold, both tendencies lose on the objective, by 15,048 and 8,220 with intervals that exclude zero. It appears in the tail rather than the middle, since panic selling takes the fifth percentile from 276,615 down to 218,950, a loss of about 57,700, while the middle of the paired difference barely moves. And it appears once the trigger is set where a nervous client would really set it, which the sensitivity table below shows.
 """)
 
 # =========================================================================== 5
@@ -656,9 +676,9 @@ print(equal_table.to_string(index=False, float_format=lambda v: f"{v:,.2f}"))
 md(r"""
 This is the experiment that tells us whether the ranking above is a property of the policies or of the decade. Every fund is given the same expected return, which removes a cross-sectional spread of 6.01% a year, while the covariance matrix and the month-to-month structure are left exactly as they were, so the scenarios differ from the main ones in one respect only: no fund carries a drift advantage over any other.
 
-The 28,370 that doing nothing was worth disappears completely. The band now sits 265 above it with an interval of $[-564, 1{,}095]$, which is to say the two are indistinguishable, and the re-solving model is likewise a tie at $-269$. Nothing here says rebalancing wins; it says the case against it was built entirely out of one decade's cross-section, and that with that cross-section removed discipline is free.
+The 28,188 that doing nothing was worth disappears completely. The band now sits 326 above it with an interval of $[-457, 1{,}109]$, which is to say the two are indistinguishable, while the re-solving model moves from second place to first and beats holding by 1,328 with an interval of $[77, 2{,}579]$ that excludes zero. Nothing here says the band wins; it says the case against discipline was built entirely out of one decade's cross-section, and that with that cross-section removed discipline is free and re-optimising is better than free.
 
-Two differences survive the change, and both are significant. Panic selling still loses, by 970 with an interval of $[-1{,}467, -474]$, so its cost is a property of the rule rather than of the sample, which is what one would expect of a rule that sits out of the market at the worst moments. Equal weights still loses by 4,640. We did not test why, and the plausible reading, that spreading equally across twenty five funds is worse on risk than the constrained optimisation once no fund has a return advantage, is an inference rather than a result.
+Two policies still lose once the drift advantage is gone, and both significantly. Panic selling loses 1,301 with an interval of $[-1{,}890, -712]$, so its cost is a property of the rule rather than of the sample, which is what one would expect of a rule that sits out of the market at the worst moments. Equal weights loses 4,820. We did not test why, and the plausible reading, that spreading equally across twenty five funds is worse on risk than the constrained optimisation once no fund has a return advantage, is an inference rather than a result.
 """)
 
 code(r"""
@@ -704,7 +724,7 @@ print(panic_table.to_string(index=False, float_format=lambda v: f"{v:,.3f}"))
 md(r"""
 The trigger is the single most consequential number in the whole report and it is not one we measured, since the questionnaire detects the tendency without pinning the threshold. At 25% the rule fires in 2% of scenarios and costs nothing worth naming; at 15%, the value used above, it fires in a third; at 10% it fires in 89% and takes the median from 471,725 to 331,154.
 
-That last figure deserves to be set against the rebalancing question that occupies the rest of this report, and the comparison has to be made against the same baseline on both sides or it means nothing. Measured against holding, choosing to rebalance on the 5% band costs 78,267 on the median of the paired difference, while a client whose real threshold is 10% rather than 15% gives up 140,571 of median wealth. Measured instead against the same client at a 15% trigger, moving to 10% costs 104,183. Either way the behaviour matters more than the policy, which is an uncomfortable conclusion for a report about policies and the right one to give the adviser.
+That last figure deserves to be set against the rebalancing question that occupies the rest of this report, and the comparison has to be made against the same baseline on both sides or it means nothing. The table above gives what each trigger costs against holding, and the gap between a 15% trigger and a 10% one is larger than the gap between holding and the recommended band. Either way the behaviour matters more than the policy, which is an uncomfortable conclusion for a report about policies and the right one to give the adviser.
 """)
 
 # =========================================================================== 6
@@ -713,21 +733,23 @@ md(r"""
 
 ## 6. Recommendation to the client
 
-**Rebalance on a 5% band, and treat the trigger that would make you sell as the more urgent problem.**
+**Re-solve the portfolio every six months, keep the 5% band as the simpler alternative, and treat the trigger that would make you sell as the more urgent problem of the three.**
 
-The honest starting point is that the objective prefers the opposite. Holding the Part 2 portfolio and never trading scores 15,771 against the band's $-12{,}598$ and finishes with a median wealth of 471,725 against 385,631, and the interval around that difference excludes zero, so it is not noise. A recommendation has to answer that, not step around it.
+The honest starting point is that the objective prefers the opposite. Holding the Part 2 portfolio and never trading scores 23,129 against the band's $-5{,}058$ and finishes with a median wealth of 492,806 against 405,091, and the interval around that difference excludes zero, so it is not noise. A recommendation has to answer that, not step around it.
 
-It is answered by what the number leaves out. The portfolio was built under a constraint that no single fund exceed 35%, and that constraint was imposed once, when the portfolio was built, while the objective never asks for it again. Holding ends with 59% in one fund on average and 88% in the worst of five hundred scenarios, so the policy that wins the objective wins it by abandoning the mandate, and an adviser cannot put that in front of the client who was profiled for something else. Once the admissible policies are narrowed to those that keep the cap at the 95th percentile, the widest band that qualifies is 5%, and that is the recommendation.
+It is answered by what the number leaves out. The portfolio was built under a constraint that no single fund exceed 35%, and that constraint was imposed once, while the objective never asks for it again. Holding ends with 2.1 effective holdings against the 4.1 it started with, so the policy that wins the objective wins it by abandoning the mandate, and an adviser cannot put that in front of a client who was profiled for something else.
 
-What it costs is 28,370 of objective, with an interval of $[-30{,}202, -26{,}538]$, and 78,267 on the median of the paired difference in terminal wealth. What it buys is a portfolio that ends with 4.4 effective holdings rather than 2.3, a largest position averaging 32% rather than 59%, and a worst fall averaging 11.1% across scenarios rather than 14.0%. The client should be shown that trade in those terms and allowed to decline it.
+Among the policies that do hold the mandate, the choice is between the band and the re-solving model, and **the re-solving model is the better of the two on every number that matters here**. It gives up 6,384 of objective against holding where the band gives up 28,188, it keeps 3.7 effective holdings against the band's 4.0, and it wins against holding in 41% of scenarios against the band's 5%. Discipline through a re-solved optimisation is roughly a quarter the price of discipline through a fixed band.
 
-Two of those figures are easy to misread and are worth stating precisely. The 78,267 is the median of the per-scenario differences, which is the right statistic when the scenarios are shared; the difference between the two marginal medians is 86,094, and the two are not the same quantity. The worst fall is the average across scenarios of each path's own largest fall, not the largest fall anywhere, which for the band is considerably deeper.
+So the recommendation is the re-solving model, with the band as the simpler fallback for a client who wants a rule they can check themselves. What discipline costs, taken at the cheaper of the two, is 6,384 of objective with an interval of $[-8{,}055, -4{,}714]$. What it buys is a portfolio that ends with 3.7 effective holdings rather than 2.1. The client should be shown that trade in those terms and allowed to decline it.
 
-Our confidence that the trade is worth taking rests on the robustness test rather than on the main table, because when every fund is given the same expected return the entire advantage of holding vanishes and the two policies become indistinguishable, at 265 with an interval of $[-564, 1{,}095]$. The case for doing nothing was built out of one decade's cross-sectional spread of 6.01% a year, and a client is being asked to bet the next decade on it repeating. Rebalancing is the policy that does not need that bet to pay.
+One figure is easy to misread. The worst fall reported in the table is the average across scenarios of each path's own largest fall, not the largest fall anywhere, which is deeper for every policy.
+
+Our confidence that the trade is worth taking rests on the robustness test rather than on the main table. When every fund is given the same expected return, the entire advantage of holding vanishes: the band becomes indistinguishable from it, at 326 with an interval of $[-457, 1{,}109]$, and the re-solving model beats it outright by 1,328 with an interval that excludes zero. The case for doing nothing was built out of one decade's cross-sectional spread of 6.01% a year, and a client is being asked to bet the next decade on it repeating. Re-optimising is the policy that does not need that bet to pay, and is the only one that is better off without it.
 
 **What would change the recommendation.**
 
-If the client genuinely has no mandate, and is content to end with most of their wealth in whichever fund happened to run, then holding is the better policy on every number in this report and should be recommended instead. The cap is a constraint we were given, not a preference we measured, and a client who waives it is a different client.
+If the client genuinely has no mandate, and is content to end with most of their wealth in whichever fund happened to run, then holding is the better policy on every number in this report and should be recommended instead. The cap is a constraint we set as the advisory firm's, not a preference we measured, and a client who waives it is a different client.
 
 If the spread of expected returns across funds is believed to be much smaller than the 6.01% a year this sample showed, which is what the course's own treatment of estimation error would suggest, then the cost of rebalancing is close to zero and the case becomes one-sided.
 
@@ -737,13 +759,13 @@ If the client's true panic threshold is nearer 10% than 15%, the advice changes 
 
 ## 7. Limitations
 
-**The scenarios inherit the sample they were drawn from.** The block bootstrap resamples the same 129 months used to estimate $\mu$ and $\Sigma$, so the expected returns inside the simulation are the sample's own, and no amount of simulation can reveal the estimation error that section 2.2 is about. Comparisons between policies remain valid, because every policy meets the same scenarios, while the level of terminal wealth is not a forecast: holding's median of 471,725 from 100,000 implies 16.8% a year, and the recommended band's 385,631 implies 14.5%, both of which describe 2016 to 2026 rather than the next ten years.
+**The scenarios inherit the sample they were drawn from.** The block bootstrap resamples the same 129 months used to estimate $\mu$ and $\Sigma$, so the expected returns inside the simulation are the sample's own, and no amount of simulation can reveal the estimation error that section 2.2 is about. Comparisons between policies remain valid, because every policy meets the same scenarios, while the level of terminal wealth is not a forecast: holding's median of 492,806 from 100,000 implies 17.3% a year and the recommended policy's 480,552 implies 17.0%, both of which describe 2016 to 2026 rather than the next ten years.
 
 **Dependence longer than six months is destroyed.** Blocks of three to six months preserve whatever serial structure lives inside that window and nothing beyond it, so valuation-driven mean reversion over several years, if it exists, cannot appear in these scenarios. A policy that profits from it would be invisible here.
 
 **One cost model, and nothing else.** Ten basis points on every peso traded, no taxes, no bid-ask spread that widens when it matters, no contributions or withdrawals over ten years, and perfect divisibility. A real client's ten years contain all of these.
 
-**The profile is one administration.** The ten questions were answered once, with no repetition to check stability, and the course's own treatment notes that published loss-aversion estimates range from 1.4 to 3.0 partly because elicitation methods disagree. The ladder brackets the switch point rather than locating it, so this client's 2.16 is a bracket midpoint and a finer ladder would move it.
+**The profile is one administration, and loss aversion is not separately identified.** The ten questions were answered once, with no repetition to check stability, and the course's own treatment notes that published estimates range from 1.4 to 3.0 partly because elicitation methods disagree. The ladder brackets the switch point rather than locating it, so this client's value is a bracket midpoint and a finer ladder would move it. More fundamentally, the appendix of that lecture states that loss aversion and probability weighting cannot be separated from a single indifference, so the figure reported here is conditional on the weighting function being the published one, and an elicitation designed to cancel the weights would be needed to do better.
 
 **The re-solving policy never learns.** It solves with the moments estimated at time zero, which keeps it free of lookahead but also means it cannot react to anything the simulated decade reveals. A version that re-estimated from the path would be a different policy and might rank differently.
 
@@ -752,8 +774,8 @@ If the client's true panic threshold is nearer 10% than 15%, the advice changes 
 1. The map from loss aversion to the risk aversion of Part 2, linear between two anchors we chose.
 2. The shrinkage intensity of 0.50 applied to the mean, where the course's own prescription is an explicit covariance target or a prior on returns.
 3. The convention that the commission is charged on every unit traded rather than on the course's turnover, which is half that.
-4. The mandate checked at the 95th percentile across scenarios rather than at the mean or the worst case.
-5. The ladder format of the loss-aversion question, where the lecture asks for the number directly.
+4. The mandate read as a standing constraint on the policy, with the overshoot bounded at five percentage points and checked at the 95th percentile across scenarios.
+5. The ladder format of the loss-aversion question, where the lecture asks for the number directly, and the use of the bracket midpoint as the switch point.
 
 Every one of them moves the answer, and the first, second and fourth move it most.
 

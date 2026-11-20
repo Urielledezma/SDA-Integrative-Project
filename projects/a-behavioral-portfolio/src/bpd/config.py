@@ -81,6 +81,15 @@ MIN_POSITION = 0.02
 MAX_POSITION = 0.35
 CLASS_CAP = 0.40
 
+# How far beyond the position cap a policy may let the largest holding drift before the
+# mandate counts as abandoned, measured at the 95th percentile across scenarios.  OURS,
+# and it exists because no policy can hold the cap exactly: the weights move between the
+# dates a policy acts, and the optimiser places the portfolio within a point of the cap
+# to begin with, so a test for never exceeding it would reject every rebalancing rule,
+# including one that trades every month.  What a policy can control is how far past the
+# cap it lets the portfolio run, and this is the bound on that overshoot.
+DRIFT_TOLERANCE = 0.05
+
 # Risk aversion is not elicited directly.  It is set from loss aversion, so that a
 # client who needs a larger gain before accepting a symmetric bet is given a more
 # conservative portfolio.  The map is linear through the two anchors below and is a

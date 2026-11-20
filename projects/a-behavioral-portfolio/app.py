@@ -5,7 +5,9 @@
 The client answers the questionnaire, sees the profile it implies, the portfolio built for
 that profile, the spread of wealth paths it produces over ten years, and what their own
 stated tendencies would cost them.  Every number shown is computed by the same functions
-the report uses, so the two cannot disagree.
+the report uses. The page opens on its own defaults rather than on the parameters the
+report tuned, so a number here matches the report only when the settings match, and the
+sidebar shows what they are.
 """
 import pathlib
 import sys
@@ -72,7 +74,7 @@ def run_one(policy_name, band, penalty, every, drawdown, recovery, intensity,
     }
     start = equal if policy_name == "Equal weights, never trade" else weights
     client = questionnaire.ClientProfile(alpha=alpha, beta=beta, lam=lam, gamma=gamma,
-                                         reference="A target I have in mind")
+                                         reference="")
     out = simulator.run_policy(makers[policy_name], paths, start, client, reference,
                                initial=initial, cost=cost)
     return {k: out[k] for k in ("terminal", "value", "max_drawdown", "turnover_per_year",
@@ -132,7 +134,9 @@ st.sidebar.header("Your money")
 initial = st.sidebar.number_input("Amount to invest", 10_000.0, 10_000_000.0,
                                   config.INITIAL_WEALTH, step=10_000.0)
 target_multiple = st.sidebar.slider("Target, as a multiple of what you invest", 1.5, 6.0,
-                                    config.HEADLINE_TARGET_MULTIPLE, step=0.5)
+                                    config.HEADLINE_TARGET_MULTIPLE, step=0.5,
+                                    help="Used only if question 5 says you compare against "
+                                         "a target.")
 n_paths = st.sidebar.select_slider("Scenarios to simulate", [100, 200, 500], value=200)
 
 with st.sidebar.expander("Adviser settings"):
@@ -153,7 +157,7 @@ with st.sidebar.expander("Adviser settings"):
     intensity = st.slider("How hard you chase winners", 0.0, 2.0, config.CHASE_INTENSITY, step=0.25)
 
 client = questionnaire.score(answers)
-reference = initial * target_multiple
+reference = simulator.reference_wealth(client.reference, initial, initial * target_multiple)
 weights, report, mu, sigma = build_portfolio(client.gamma, shrink, k_max, min_position,
                                              max_position, class_cap)
 SETTINGS = (client.gamma, shrink, k_max, min_position, max_position, class_cap)
@@ -254,7 +258,8 @@ plt.close(figure)
 
 # --- the comparison ----------------------------------------------------------
 st.header("The policies side by side")
-baseline = "Rebalance on a band" if "Rebalance on a band" in outs else chosen[0]
+DISCIPLINED = "Rebalance on a band"
+baseline = DISCIPLINED if DISCIPLINED in outs else None
 rows = []
 for name, out in outs.items():
     terminal = out["terminal"]
@@ -281,7 +286,7 @@ for name in chosen:
 
 # --- what the tendencies cost ------------------------------------------------
 st.header("What your tendencies would cost you")
-if baseline in outs:
+if baseline is not None:
     disciplined = np.median(outs[baseline]["terminal"])
     cost_rows = []
     for name in ("Sell out after a fall", "Chase last year's winners"):
@@ -303,7 +308,9 @@ if baseline in outs:
     else:
         st.info("Add one of the two behavioural policies above to see what it would cost.")
 else:
-    st.info("Include the band rebalancing policy to measure the cost of a tendency against it.")
+    st.info("The cost of a tendency is measured against disciplined rebalancing, so add "
+            "**Rebalance on a band** to the comparison above to see it. Comparing a "
+            "tendency against another tendency would not say what it costs.")
 
 # --- the recommendation ------------------------------------------------------
 st.header("What we would do")

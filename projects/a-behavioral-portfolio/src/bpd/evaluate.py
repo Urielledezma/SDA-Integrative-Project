@@ -68,22 +68,31 @@ def paired_difference(sample: np.ndarray, baseline: np.ndarray) -> dict:
     return out
 
 
-def mandate_is_kept(out, max_position: float, quantile: float = 95.0) -> bool:
-    """Whether the portfolio still obeys the Part 2 position cap at the end.
+def mandate_is_kept(out, max_position: float, tolerance: float = None,
+                    quantile: float = 95.0) -> bool:
+    """Whether the policy keeps the largest holding near the Part 2 position cap.
 
     Part 2 caps any single holding, but it imposes that cap once, at the moment the
     portfolio is built.  Nothing in the objective asks for it to hold afterwards, so a
     policy is free to let the weights drift past it, and the drift costs nothing in a
     sample where the asset that runs away is the one the optimiser already liked.
 
-    Reading that cap as a standing constraint on the policy is OURS: the brief imposes
-    it on the Part 2 portfolio and says nothing about the policies of Part 3.  The
-    quantile is ours too, and 95% was chosen because a mandate that holds on average is
-    not one, while requiring it in every scenario would admit only a rule that trades on
-    the cap itself rather than on drift from the target.
+    Reading the cap as a standing constraint on the policy is OURS, since the brief
+    imposes it on the Part 2 portfolio and says nothing about the policies of Part 3.
+
+    The test is on the overshoot rather than on the cap itself, and that is forced
+    rather than chosen.  The weights move between the dates a policy acts, and the
+    optimiser places the portfolio within a point of the cap to begin with, so demanding
+    that the cap never be exceeded rejects every rebalancing rule, including one that
+    trades every month.  What a policy can control is how far past the cap it lets the
+    portfolio run.  The bound on that overshoot and the quantile are both ours, and the
+    quantile is high rather than average because a mandate that holds on average is not
+    one.
     """
+    from . import config
+    tolerance = config.DRIFT_TOLERANCE if tolerance is None else tolerance
     largest = np.asarray(out["terminal_weights"]).max(axis=1)
-    return bool(np.percentile(largest, quantile) <= max_position)
+    return bool(np.percentile(largest, quantile) <= max_position + tolerance)
 
 
 def tune(make_policy_for, grid, paths, target, client, reference, metric="value",
@@ -113,6 +122,8 @@ def tune(make_policy_for, grid, paths, target, client, reference, metric="value"
                         "feasible": True if feasible is None else bool(feasible(out))})
     admissible = [row for row in results if row["feasible"]]
     if not admissible:
-        raise ValueError("no setting on this grid satisfies the constraint")
+        best = min(results, key=lambda row: row["largest_end_weight_p95"])
+        best["no_feasible_setting"] = True
+        return best, results
     best = max(admissible, key=lambda row: row["score"])
     return best, results

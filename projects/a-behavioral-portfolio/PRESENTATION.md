@@ -1,10 +1,17 @@
 # Presentation plan: fifteen minutes and a live demo
 
-> **Before you present, refresh the figures.** Every number in this plan lives in
-> `results/summary.txt` and in the executed report, and the report has been re-run since
-> this was first written. Open that file, check the six figures in the last section
-> against it, and correct any that have moved. A number spoken from memory that the
-> notebook contradicts on screen is the worst thing that can happen in this room.
+> **Before you present, print the figures rather than retyping them:**
+>
+> ```bash
+> python presentation_figures.py
+> ```
+>
+> It computes the deterministic ones from the data and the profile, and reads the rest out
+> of `results/`. It refuses to print the second group if the evaluation has not been run,
+> if it was a smoke run, or if it was run for a different client than the code now
+> produces, which is the failure that actually happened here when the loss-aversion
+> estimator was corrected. A number spoken from memory that the notebook contradicts on
+> screen is the worst thing that can happen in this room.
 
 ---
 
@@ -153,14 +160,20 @@ Everyone must be able to answer anything, because questions do not respect the s
 - `results/summary.txt` open in a second window, because every number asked about is in it.
 - `preguntas-del-martes.md` read once that morning.
 
-**Six figures to know by heart. Fill these in from `results/summary.txt` after the final
-run, and say them only from this list:**
+**The figures to know by heart.** Run `python presentation_figures.py` on the morning and
+read them off it. The first group never changes unless the profile does, so it is filled
+in here; the second comes from the evaluation and the script will refuse to print it until
+the full run exists.
 
 | What | Value |
 |---|---|
-| The client's loss aversion, corrected | |
-| Median terminal wealth, holding | |
-| Median terminal wealth, the recommended policy | |
-| What discipline costs against holding, with its interval | |
-| The cross-sectional spread the robustness test removes | |
-| Largest single holding at the end, holding, worst scenario | |
+| The client's loss aversion, uncorrected | 2.16 |
+| The client's loss aversion, corrected | **2.00**, 7.3% lower |
+| Risk aversion handed to Part 2 | 5.76 |
+| The portfolio | 5 holdings, largest 34.1% against a 35% cap |
+| Expected return and volatility | 12.08% and 9.47% a year |
+| The cross-sectional spread the robustness test removes | **6.01% a year** |
+| Median terminal wealth, holding | from the script |
+| Median terminal wealth, the recommended policy | from the script |
+| What discipline costs, with its interval | from the script |
+| Largest single holding at the end, holding, worst scenario | from the script |

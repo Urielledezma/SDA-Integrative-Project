@@ -100,6 +100,14 @@ def main():
         problems.append("a report quotes figures its own cells did not print, "
                         "or was never executed; see verify_report.py above")
 
+    for script in sorted(ROOT.glob("projects/*/presentation_figures.py")):
+        check = subprocess.run([sys.executable, script.name], cwd=script.parent,
+                               capture_output=True, text=True)
+        if check.returncode != 0:
+            tail = [l for l in (check.stdout or "").splitlines() if "NOT AVAILABLE" in l]
+            problems.append(f"{script.parent.name}: " +
+                            (tail[0].strip() if tail else "its results are not usable"))
+
     if not args.skip_tests:
         print("running the tests")
         result = subprocess.run([sys.executable, "-m", "pytest", "-q"],

@@ -1,0 +1,54 @@
+months of history      129  (2016-02-29 to 2026-10-31)
+client                 alpha 0.880  beta 0.880  lambda 2.161  gamma 6.75
+reference point        A target I have in mind, 400,000
+Part 2 portfolio       5 holdings, expected 11.87% a year, volatility 9.11%
+
+tuning on 40 scenarios from seed 20261119
+  PFA band               best 20% of 7 values tried
+  CFA                    best penalty 1, every 6 months, of 12 combinations tried
+
+evaluating on 60 scenarios from seed 20261124, the same scenarios for every policy
+
+policy                                    class               E[v]   median W       5th      95th  short  maxDD   turn
+Buy and hold the Part 2 portfolio         baseline          18,755    491,568   257,606   829,379   27%  13.7%   0.00
+Buy and hold equal weights                baseline         -46,850    296,420   180,854   476,372   77%  17.3%   0.00
+Band rebalancing, band 20%                PFA                3,533    459,237   258,363   612,298   32%  12.0%   0.02
+Re-solve every 6 months, penalty 1        CFA                7,878    466,924   255,309   653,849   27%  13.4%   0.06
+Panic selling at 15%                      behavioural        8,301    466,031   237,526   750,696   35%  13.4%   0.10
+Performance chasing, intensity 0.5        behavioural       11,225    481,028   264,343   721,450   27%  13.0%   0.18
+
+paired against the baseline, same scenarios on both sides
+policy                                           d E[v]                    95% CI   wins  d median W
+Buy and hold equal weights                      -65,604        [-73,226, -57,983]    0%    -177,556
+Band rebalancing, band 20%                      -15,221        [-19,730, -10,713]   10%     -44,929
+Re-solve every 6 months, penalty 1              -10,877         [-15,453, -6,301]   25%     -23,035
+Panic selling at 15%                            -10,454         [-16,558, -4,349]    2%           0
+Performance chasing, intensity 0.5               -7,530         [-11,985, -3,076]   32%     -30,739
+
+cost of behaviour against the disciplined policy, Band rebalancing, band 20%
+  Buy and hold the Part 2 portfolio               44,929   107.0% of its median
+  Buy and hold equal weights                    -134,309    64.5% of its median
+  Re-solve every 6 months, penalty 1              16,444   101.7% of its median
+  Panic selling at 15%                            26,317   101.5% of its median
+  Performance chasing, intensity 0.5              21,339   104.7% of its median
+
+target 2x initial wealth, reference 200,000: best is Buy and hold the Part 2 portfolio
+
+target 3x initial wealth, reference 300,000: best is Buy and hold the Part 2 portfolio
+
+target 4x initial wealth, reference 400,000: best is Buy and hold the Part 2 portfolio
+
+panic threshold sensitivity
+  drawdown 10%  fires in   90% of scenarios   median W     339,755   mean maxDD 12.3%
+  drawdown 15%  fires in   25% of scenarios   median W     466,031   mean maxDD 13.4%
+  drawdown 20%  fires in    8% of scenarios   median W     491,568   mean maxDD 13.6%
+  drawdown 25%  fires in    2% of scenarios   median W     491,568   mean maxDD 13.7%
+
+shrinkage sensitivity, buy and hold on each resulting portfolio
+  shrink 0.00  holdings  6  largest weight 35.0%  volatility 10.4%  median W     550,598
+  shrink 0.25  holdings  6  largest weight 35.0%  volatility  9.7%  median W     529,354
+  shrink 0.50  holdings  5  largest weight 30.4%  volatility  9.1%  median W     491,568
+  shrink 0.75  holdings  6  largest weight 35.0%  volatility  5.0%  median W     323,826
+  shrink 1.00  holdings  9  largest weight 35.0%  volatility  2.7%  median W     180,990
+
+ran in 74 s

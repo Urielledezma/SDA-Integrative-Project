@@ -156,6 +156,10 @@ def default_answers() -> dict:
     the ladder brackets the switch point instead of locating it and no rung sits at the
     $2,513 that 2.25 would require.  Every behavioural flag is set, which makes this the
     client whose tendencies cost the most and therefore the one worth showing a dashboard.
+
+    Question 5 is answered with a target, because a reference point at the initial wealth
+    is never reached from below in this sample, so the loss arm of the value function
+    would never activate and loss aversion would not affect the ranking at all.
     """
     ce_gain = GAIN_PRIZE * 0.5 ** (1.0 / config.ALPHA_TK)
     ce_gain_small = GAIN_PRIZE_SMALL * 0.5 ** (1.0 / config.ALPHA_TK)
@@ -165,7 +169,7 @@ def default_answers() -> dict:
         "q2_gain_ce": round(ce_gain, 2),
         "q3_loss_ce": round(ce_loss, 2),
         "q4_gain_ce_small": round(ce_gain_small, 2),
-        "q5_reference": "The amount I started with",
+        "q5_reference": "A target I have in mind",
         "q6_drawdown": "Sell and wait in cash until it recovers",
         "q7_chasing": "Move money into the one that has been winning",
         "q8_disposition": "The one that is above what I paid",

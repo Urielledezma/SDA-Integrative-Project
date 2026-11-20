@@ -1,0 +1,86 @@
+"""Step 6 of the six-step process: evaluating policies.
+
+Three rules are imposed here rather than left to the caller, because each one is a
+recurring error the course names.
+
+Common random numbers.  Every policy in a comparison is run on the same array of
+scenarios, since deck "005 SDA" page 18 states that reusing the paths is what makes the
+differences something other than simulation noise, and page 24 lists "comparing on
+different samples" among the recurring modelling errors.
+
+Separate seeds.  The scenarios used to tune a policy's parameters and the scenarios used
+to report its performance come from different seeds, so a parameter that happens to suit
+one set of draws cannot flatter itself on the same draws.
+
+Paired differences.  Because the scenarios are shared, a policy and its baseline are
+observed on the same draw, so the confidence interval that answers "is this policy
+better" is the one around the mean of the per-scenario difference, which is narrower than
+the interval around either mean and is the one reported.
+"""
+import numpy as np
+
+from . import config
+
+Z95 = 1.959963984540054
+
+
+def scenarios(rets: np.ndarray, n_paths: int, seed: int, horizon: int = None):
+    """One array of scenarios, drawn once and reused by every policy."""
+    from . import data
+    horizon = config.HORIZON_MONTHS if horizon is None else horizon
+    return data.block_bootstrap(rets, n_paths, horizon, seed)
+
+
+def summarise(sample: np.ndarray) -> dict:
+    """Mean, spread and a confidence interval for the mean of one sample."""
+    sample = np.asarray(sample, dtype=float)
+    n = sample.size
+    standard_error = sample.std(ddof=1) / np.sqrt(n)
+    return {
+        "n": n,
+        "mean": float(sample.mean()),
+        "std": float(sample.std(ddof=1)),
+        "median": float(np.median(sample)),
+        "p5": float(np.percentile(sample, 5)),
+        "p95": float(np.percentile(sample, 95)),
+        "se": float(standard_error),
+        "ci_low": float(sample.mean() - Z95 * standard_error),
+        "ci_high": float(sample.mean() + Z95 * standard_error),
+    }
+
+
+def paired_difference(sample: np.ndarray, baseline: np.ndarray) -> dict:
+    """The per-scenario difference against a baseline, summarised.
+
+    The two samples must come from the same scenarios in the same order, which is what
+    common random numbers buys and what makes this interval meaningful.
+    """
+    sample = np.asarray(sample, dtype=float)
+    baseline = np.asarray(baseline, dtype=float)
+    if sample.shape != baseline.shape:
+        raise ValueError("a paired difference needs the same scenarios on both sides")
+    difference = sample - baseline
+    out = summarise(difference)
+    out["wins"] = float((difference > 0).mean())
+    out["significant"] = bool(out["ci_low"] > 0.0 or out["ci_high"] < 0.0)
+    return out
+
+
+def tune(make_policy_for, grid, paths, target, client, reference, metric="value"):
+    """Grid search over a policy's parameters on the tuning scenarios.
+
+    `grid` is a list of parameter tuples and `make_policy_for` turns one tuple into a
+    policy factory, so the search is the course's own policy search: pick a structure,
+    then choose theta inside it by simulation on shared paths.
+    """
+    from . import simulator
+    results = []
+    for parameters in grid:
+        out = simulator.run_policy(make_policy_for(parameters), paths, target,
+                                   client, reference)
+        results.append({"parameters": parameters,
+                        "score": float(np.mean(out[metric])),
+                        "median_terminal": float(np.median(out["terminal"])),
+                        "turnover_per_year": float(np.mean(out["turnover_per_year"]))})
+    best = max(results, key=lambda row: row["score"])
+    return best, results

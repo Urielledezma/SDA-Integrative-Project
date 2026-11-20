@@ -32,3 +32,9 @@ desktop.ini
 # --- Local archive ------------------------------------------------------------
 # Superseded drafts kept on disk but not published.
 .archives/
+
+# --- Browser automation -------------------------------------------------------
+# Snapshots and screenshots from verifying the dashboard, not part of the delivery.
+.playwright-cli/
+.playwright/
+dashboard-a.png

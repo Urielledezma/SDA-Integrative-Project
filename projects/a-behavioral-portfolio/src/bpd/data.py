@@ -45,9 +45,44 @@ def monthly_returns(prices: pd.DataFrame) -> pd.DataFrame:
     return prices.resample("ME").last().pct_change().dropna()
 
 
-def moments(rets: pd.DataFrame):
-    """Monthly mean vector and covariance matrix, the mu and Sigma of deck 002."""
-    return rets.mean().to_numpy(), rets.cov().to_numpy()
+def moments(rets: pd.DataFrame, shrink: float = None):
+    """Monthly mean vector and covariance matrix, the mu and Sigma of deck 002.
+
+    The covariance is the sample covariance, because Chopra and Ziemba (1993), on page 20
+    of that deck, rank equal relative errors in means, variances and covariances at
+    10 : 2 : 1 in certainty-equivalent loss, so cleaning the covariance is work on the
+    least damaging input.
+
+    The mean is shrunk toward the cross-sectional grand mean, deliberately and with the
+    intensity reported, because page 27 of the same deck shows that a binding long-only
+    constraint already shrinks the inputs silently and prescribes doing it on purpose
+    instead.  At shrink = 0 the estimate is the raw sample mean and at shrink = 1 every
+    asset is given the same mean, which removes the cross-sectional signal entirely.
+    """
+    mu = rets.mean().to_numpy()
+    sigma = rets.cov().to_numpy()
+    shrink = config.MU_SHRINK if shrink is None else shrink
+    return shrink_mean(mu, shrink), sigma
+
+
+def shrink_mean(mu: np.ndarray, shrink: float) -> np.ndarray:
+    """Pull the sample mean toward its cross-sectional average by `shrink`."""
+    mu = np.asarray(mu, dtype=float)
+    return (1.0 - shrink) * mu + shrink * mu.mean()
+
+
+def equalise_means(rets: np.ndarray) -> np.ndarray:
+    """Shift every asset's returns so they share one expected return.
+
+    The covariance matrix and the month-to-month structure are untouched, so bootstrapping
+    from this matrix produces scenarios that differ from the main ones in exactly one
+    respect: no asset carries a drift advantage over any other.  It is the test of whether
+    a policy's ranking came from the policy or from the decade the sample covers, and it
+    is the course's own perturbation exercise of deck "002 mean variance" page 23 applied
+    to the whole cross-section at once rather than to one asset.
+    """
+    rets = np.asarray(rets, dtype=float)
+    return rets - rets.mean(axis=0) + rets.mean()
 
 
 def block_bootstrap(rets: np.ndarray, n_paths: int, horizon: int, seed: int,

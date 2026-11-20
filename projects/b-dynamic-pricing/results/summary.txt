@@ -1,3 +1,5 @@
+SMOKE RUN on 60 scenarios, which is fewer than the 500 the brief requires. These numbers are for checking that the pipeline runs and must not be quoted anywhere. Written before the guard that stamps this line existed, and added by hand afterwards.
+
 tuning on 40 scenarios from seed 20261120, reporting on 60 from seed 20261124
 venue 2,000 seats, 60 days, prices 40 to 200 in steps of 10
 

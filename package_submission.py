@@ -105,8 +105,11 @@ def main():
     problems.extend(f"credential file would be shipped: {p}" for p in leaked)
 
     # A smoke run writes the same filenames as the real evaluation, so the only thing
-    # standing between a quick check and a shipped table is this.
+    # standing between a quick check and a shipped table is this. It applies to what is
+    # being packaged, since a dropped project's tables are not going anywhere.
     for summary in ROOT.glob("projects/*/results/summary.txt"):
+        if any(d in summary.parents for d in dropped):
+            continue
         if "SMOKE RUN" in summary.read_text(encoding="utf-8"):
             problems.append(f"{summary.relative_to(ROOT).as_posix()} is from a smoke run, "
                             f"so results/ holds numbers too small to report")

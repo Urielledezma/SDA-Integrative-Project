@@ -1,14 +1,17 @@
 # Presentation plan: fifteen minutes and a live demo
 
-Every figure below is in `results/summary.txt` and in the executed report, so nothing here
-has to be remembered separately from the work.
+> **Before you present, refresh the figures.** Every number in this plan lives in
+> `results/summary.txt` and in the executed report, and the report has been re-run since
+> this was first written. Open that file, check the six figures in the last section
+> against it, and correct any that have moved. A number spoken from memory that the
+> notebook contradicts on screen is the worst thing that can happen in this room.
 
 ---
 
 ## The arc
 
 One sentence to carry the whole talk: **the policy that scores best is the one that stops
-being the portfolio we sold, and once that is fixed the entire case against rebalancing
+being the portfolio we sold, and once that is fixed the entire case against discipline
 turns out to be one decade's cross-section.**
 
 ---
@@ -17,112 +20,126 @@ turns out to be one decade's cross-section.**
 
 ### 1. The client and the question (1 min)
 
-An individual investor, 100,000 to invest, ten years, and a target of 400,000. Three
-questions in order: what kind of risk taker are they, what portfolio does that imply, and
-what will their own habits do to it.
+An individual investor, 100,000 pesos, ten years, a target of 400,000. Three questions in
+order: what kind of risk taker are they, what portfolio does that imply, and what will
+their own habits do to it.
 
-### 2. Part 1, the profile (2 min)
+### 2. Part 1, the profile (3 min)
 
-Ten questions. Show the loss-aversion ladder, because it is the opening exercise of the
-prospect-theory lecture: a coin that loses 1,000 on heads, and the smallest gain at which
-they would take it. This client switches at 2,600, which brackets to 2,400, which gives
-**lambda 2.16**.
+Ten questions. Show the loss-aversion ladder, because it is the opening exercise of his
+own prospect-theory lecture: a coin that loses 1,000 on heads, and the smallest gain at
+which they would take it.
 
-Say the identification order out loud, because it is the part that shows we understood the
-algebra rather than copied a formula: **beta, then alpha, then lambda.** A loss-only lottery
-has lambda on both sides of the indifference condition, so it cancels and leaves curvature
-alone. Only then does the mixed lottery identify lambda.
+Say the identification order, because it shows we read the algebra rather than copied a
+formula: **beta, then alpha, then lambda.** A loss-only lottery has lambda on both sides
+of the indifference condition, so it cancels and leaves curvature alone. Only the last
+position is forced; the two curvatures could be taken either way round.
 
-One line on validation: the implementation reproduces fifteen numbers printed in the course
-deck, including w+(0.5) = 0.421 and the crossing of the diagonal at p = 0.339.
+**Then spend the rest of this slide on the appendix, because it is the strongest thing in
+the report.** His deck's page 31 says the naive estimator is biased, because the two
+decision weights are not both a half: 0.421 against 0.454. The corrected identity
+multiplies by their ratio and comes out about 7% lower, and his own worked case is 2.08
+instead of 2.24. **We use the corrected one, and our code reproduces both of his figures.**
+
+If asked why not the formula from class: because he wrote the appendix that withdraws it.
+
+Close with the limitation he states there: loss aversion and probability weighting are not
+separately identified from one indifference, so our lambda is conditional on the weighting
+function being the published one. Our ladder brackets the switch point; it does not cancel
+the weights, so we do not claim that it does.
 
 ### 3. Part 2, the portfolio (2 min)
 
-Mean-variance in the utility form, with cardinality, minimum lots and a cap of 40% per asset
-class, solved with Gurobi. Five holdings, 11.87% a year expected, 9.11% volatility.
+Mean-variance in the utility form, with cardinality, minimum lots and a cap per asset
+class, solved with Gurobi.
 
-Spend most of this slide on the input, not the output. Merton says the standard error of a
-mean depends only on the calendar span. Chopra and Ziemba put the damage from errors in
-means at ten times that of covariances. Michaud says the optimiser prefers exactly the
-assets carrying positive estimation error. So we shrink the mean toward its cross-sectional
-average on purpose, which is what Jagannathan and Ma's result prescribes, rather than
-letting the long-only constraint do it silently.
+Spend the slide on the input, not the output. Merton: the standard error of a mean depends
+only on the calendar span. Chopra and Ziemba: errors in means cost ten times what errors
+in covariances cost. Michaud: the optimiser prefers exactly the assets carrying positive
+estimation error. So we shrink the mean toward its cross-sectional average on purpose,
+which is what Jagannathan and Ma's result prescribes, rather than letting the long-only
+constraint do it silently. Say plainly that we shrink the **mean** where his slide names a
+covariance target or a prior, and that the departure is ours.
 
 ### 4. Part 3, the model (2 min)
 
 The five elements on one slide. Dwell on two things only:
 
-- **Why the index value is in the state.** A client sitting in cash has no drawdown of their
-  own left to recover from, so the rule that brings them back has to read the market.
+- **Why the index value is in the state.** A client sitting in cash has no drawdown of
+  their own left to recover from, so the rule that brings them back must read the market.
 - **The timing.** The trade is chosen before the month's return is known.
 
-### 5. The policies (2 min)
+### 5. The policies (1 min)
 
-Six rules in a table with their classes: two baselines, the band as a PFA, the re-solving
-model as a CFA, and the two behavioural rules, which are PFAs in structure but are never
-tuned, because a panic rule tuned to maximise wealth is no longer a panic rule.
+Six rules with their classes: two baselines, the band as a PFA, the re-solving model as a
+CFA, and the two behavioural rules, which are PFAs in form but are never tuned, because a
+panic rule tuned to maximise wealth is no longer a panic rule.
 
 ### 6. The result, and the thing that went wrong (3 min)
 
 **This is the centre of the talk. Do not rush it.**
 
-Put up the main table. Holding wins: 15,771 against the band's −12,598, and a median of
-471,725 against 385,631.
+Put up the main table. Holding wins the objective, and by a wide margin.
 
-Then put up the drift column. Holding ends with **59% in one fund on average and 88% in the
-worst scenario**, against the 35% cap it was built under. Effective holdings fall from 4.4
-to 2.3.
+Then put up the drift column. Holding ends with roughly half the portfolio in a single
+fund, against the five holdings and the 35% cap it was built under. Effective holdings
+fall by about half.
 
-Then say what the tuner did: searching the band against the objective alone picks **50%**,
-where the rule never fires. The policy search concluded that the best rebalancing rule is
-not to rebalance, which is the correct answer to a question we had posed wrongly, because
-the cap was imposed once and the objective never asks for it again.
+Then say what the tuner did: searching the band against the objective alone picks the
+widest value on the grid, where the rule never fires. **The policy search concluded that
+the best rebalancing rule is not to rebalance**, which is the correct answer to a question
+we had posed wrongly, because the cap was imposed once and the objective never asks for it
+again.
 
-The fix is to search only over settings that keep the cap at the 95th percentile. That gives
-**5%**, and the honest price is 28,370 of objective and about 86,000 of median wealth.
+Then say what we had to fix twice. Restricting the search to settings that keep the cap
+turned out to be unsatisfiable: the optimiser places the portfolio within a point of the
+cap, and weights move between the dates a policy acts, so the test rejected even a monthly
+rebalance. What a policy can control is the **overshoot**, so the test bounds that instead,
+at five percentage points, and we say the bound is ours.
 
 ### 7. The robustness test (2 min)
 
-Give every fund the same expected return, which removes a cross-sectional spread of 6.01% a
-year and changes nothing else. The 28,370 **disappears**: the band is now 265 ahead with an
-interval of [−564, 1,095], indistinguishable.
+Give every fund the same expected return, which removes a cross-sectional spread of about
+six percentage points a year and changes nothing else.
 
-So the case for doing nothing was built out of one decade's cross-section. Panic selling is
-the only policy that still loses significantly, at −970 with [−1,467, −474], because its cost
-is a property of the rule and not of the sample.
+**The entire advantage of holding disappears.** The band becomes statistically
+indistinguishable from it, and the re-solving model beats it outright. Panic selling is one
+of only two policies that still lose significantly, the other being equal weights, and it
+is the only one of the two that describes something a client would actually do.
+
+So the case for doing nothing was built out of one decade's cross-section.
 
 ### 8. The recommendation (1 min)
 
-Rebalance on a 5% band. It is the only admissible policy that keeps the mandate, its cost
-vanishes under the robustness test, and holding's 88% worst case cannot be put in front of
-the client who was profiled for something else.
+Re-solve the portfolio every few months; keep the band as the simpler alternative for a
+client who wants a rule they can check themselves. Discipline through re-optimisation costs
+roughly a quarter of what discipline through a fixed band costs, and holds the portfolio
+about as well.
 
 Then the line worth ending on: **a client whose real panic threshold is 10% rather than 15%
-loses about 141,000, which is more than the entire rebalancing decision is worth.** The
-adviser's effort belongs in pre-committing them against selling.
+loses more than the entire rebalancing decision is worth.** The adviser's effort belongs in
+pre-committing them against selling.
 
 ### 9. Live demo (2 min)
 
-`streamlit run app.py`, already running before the talk starts.
+`streamlit run app.py`, already running and warm before the talk starts.
 
 1. Move the loss-aversion ladder up one rung and show the portfolio turn defensive.
 2. Show the fan chart against the target line.
 3. Show the cost of the tendencies.
 
-Do not improvise beyond those three. Every slider recomputes, and a 500-scenario setting
-takes time in front of an audience, so leave it at 200.
+Do not improvise beyond those three. Leave it on 200 scenarios; 500 is slow in front of a
+room.
 
 ---
 
 ## Division of labour
 
-Four speakers, and whoever is not speaking watches the clock.
-
 | Section | Who |
 |---|---|
-| 1 and 2, client and profile | first speaker |
+| 1 and 2, client and profile, including the appendix | first speaker |
 | 3 and 4, portfolio and model | second speaker |
-| 5 and 6, policies and results | third speaker |
+| 5 and 6, policies and the two things we got wrong | third speaker |
 | 7, 8 and 9, robustness, recommendation and demo | fourth speaker |
 
 Everyone must be able to answer anything, because questions do not respect the split.
@@ -134,4 +151,16 @@ Everyone must be able to answer anything, because questions do not respect the s
 - Dashboard running and warm, on 200 scenarios.
 - Notebook open at the main results table.
 - `results/summary.txt` open in a second window, because every number asked about is in it.
-- Know these six by heart: **2.16, 471,725, 385,631, 28,370, 6.01%, 88%.**
+- `preguntas-del-martes.md` read once that morning.
+
+**Six figures to know by heart. Fill these in from `results/summary.txt` after the final
+run, and say them only from this list:**
+
+| What | Value |
+|---|---|
+| The client's loss aversion, corrected | |
+| Median terminal wealth, holding | |
+| Median terminal wealth, the recommended policy | |
+| What discipline costs against holding, with its interval | |
+| The cross-sectional spread the robustness test removes | |
+| Largest single holding at the end, holding, worst scenario | |

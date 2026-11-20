@@ -382,6 +382,72 @@ md(r"""
 <a id="s9"></a>
 
 ## 9. Recommendation, limitations and what we would do with more time
+
+### The recommendation
+
+Read the two tables in section 7 together, in this order. The first says which policy earns
+most and how wide the uncertainty around that figure is. The second says whether the gap
+against a single fixed price is larger than the noise, which is the only comparison that
+settles anything, because the policies meet the same buyers.
+
+Recommend the re-planning rule **only if** its paired interval against the fixed price
+excludes zero. If it does not, the honest advice to a promoter is the fixed price, because
+a moving price costs something no table here measures: it has to be announced, it annoys
+the buyers who went first, and it invites the question of whether tomorrow will be cheaper.
+A policy that wins by less than its own error bar does not earn that trouble.
+
+The second thing to tell the promoter is where the money actually comes from. The
+re-planning rule does not win by being clever about any single day; it wins by selling the
+last seats rather than leaving them unsold, which is visible in the sell-out column and in
+the seats-remaining chart. A promoter who already sells out does not need it.
+
+### Limitations
+
+**The arrival curve was not calibrated.** This is the largest gap and it is ours rather
+than the model's. The brief asks for the shape to be estimated from the Kaggle flight-prices
+data, `calibrate.py` does exactly that, and it was not run, because the file is 31 GB and
+Project A was the graded submission with four days left. Every level in this report
+therefore rests on a curve we chose so that expected arrivals are about 1.4 times capacity.
+What survives that choice is the **ranking** of policies under the sensitivity in section 8,
+and what does not survive it is any statement about how much revenue a real promoter would
+earn.
+
+**Everything else about demand is assumed too.** The willingness-to-pay median and spread,
+the memory parameter, the penalty for pricing above the reference and the reward for
+pricing below it, and the scarcity multiplier are all numbers we set. The brief supplies
+their functional form and not their values. Section 8 varies the one the brief singles out
+and leaves the rest fixed, which is less than a full sensitivity analysis.
+
+**Common random numbers are imperfect here, unlike in Project A.** Each scenario fixes a
+seed, so two policies start from the same stream, but the number of arrivals is endogenous:
+once a policy sells faster it crosses the scarcity threshold sooner and begins drawing a
+different number of buyers. The scenarios are therefore shared at the start and drift apart
+in a way a portfolio simulation does not. The paired intervals are still far tighter than
+unpaired ones would be, and they are not the clean comparison the course's cash example
+enjoys.
+
+**The lookahead optimises a model it knows to be wrong.** It truncates the horizon, replaces
+demand by its expectation and freezes the reference price across the horizon. The last of
+these is the one worth naming to an examiner: letting the reference follow the prices being
+chosen would make the sales term depend on the decisions through a product, and the model
+would stop being a mixed-integer linear programme.
+
+**No reinforcement-learning policy was implemented.** The brief asks for the baseline and at
+least two of the other three, and we have the baseline, the schedule and the lookahead, so
+the requirement is met. A DQN on this simulator is the obvious extension and the course's
+own agent would be the starting point.
+
+**One venue, one window, one buyer population.** Two thousand seats over sixty days with no
+competing event, no resale market, no cancellations and no ability to add capacity. A
+promoter facing any of those is facing a different problem.
+
+### What we would do with more time
+
+Run the calibration, in the order the script already implements, and report how far the
+fitted curve sits from the one assumed here. Then re-run section 7 on the fitted curve and
+say which of its conclusions moved. After that, train the reinforcement-learning agent,
+because it is the only one of the four policy classes this project does not exercise and the
+course spends three lectures on it.
 """)
 
 nb = nbf.v4.new_notebook(cells=C)

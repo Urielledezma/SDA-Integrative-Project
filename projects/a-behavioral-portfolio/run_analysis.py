@@ -93,19 +93,32 @@ def main():
     tune_paths = evaluate.scenarios(R, args.tune, config.TUNE_SEED)
     say(f"\ntuning on {args.tune} scenarios from seed {config.TUNE_SEED}")
 
+    keeps_mandate = lambda out: evaluate.mandate_is_kept(out, config.MAX_POSITION)
     best_band, band_rows = evaluate.tune(
         lambda p: policies.band_rebalance(target, p[0]),
-        [(b,) for b in config.BAND_GRID], tune_paths, target, client, reference)
+        [(b,) for b in config.BAND_GRID], tune_paths, target, client, reference,
+        feasible=keeps_mandate)
     band = best_band["parameters"][0]
-    say(f"  PFA band               best {band:.0%} of {len(config.BAND_GRID)} values tried")
+    unconstrained = max(band_rows, key=lambda row: row["score"])
+    say(f"  PFA band               best {band:.0%} of {len(config.BAND_GRID)} values tried, "
+        f"subject to keeping the {config.MAX_POSITION:.0%} position cap")
+    say(f"                         without that constraint the search picks "
+        f"{unconstrained['parameters'][0]:.0%}, which trades "
+        f"{unconstrained['turnover_per_year']:.3f} times a year and ends with "
+        f"{unconstrained['largest_end_weight_p95']:.0%} in one fund at the 95th percentile")
     pd.DataFrame([{"band": r["parameters"][0], **{k: v for k, v in r.items()
                                                   if k != "parameters"}}
                   for r in band_rows]).to_csv(RESULTS / "tuning_band.csv", index=False)
+    say("    band    score      median W   turnover   95th pct largest weight   keeps mandate")
+    for r in band_rows:
+        say(f"    {r['parameters'][0]:>5.0%} {r['score']:>10,.0f} {r['median_terminal']:>13,.0f}"
+            f" {r['turnover_per_year']:>10.3f} {r['largest_end_weight_p95']:>20.1%}"
+            f"   {'yes' if r['feasible'] else 'no'}")
 
     cfa_grid = [(p, e) for p in config.RISK_PENALTY_GRID for e in config.RESOLVE_EVERY_GRID]
     best_cfa, cfa_rows = evaluate.tune(
         lambda p: policies.periodic_resolve(target, mu, sigma, classes, p[0], p[1]),
-        cfa_grid, tune_paths, target, client, reference)
+        cfa_grid, tune_paths, target, client, reference, feasible=keeps_mandate)
     penalty, every = best_cfa["parameters"]
     say(f"  CFA                    best penalty {penalty:g}, every {every} months, "
         f"of {len(cfa_grid)} combinations tried")

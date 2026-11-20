@@ -66,21 +66,48 @@ def paired_difference(sample: np.ndarray, baseline: np.ndarray) -> dict:
     return out
 
 
-def tune(make_policy_for, grid, paths, target, client, reference, metric="value"):
+def mandate_is_kept(out, max_position: float, quantile: float = 95.0) -> bool:
+    """Whether the portfolio still obeys the Part 2 position cap at the end.
+
+    Part 2 caps any single holding, but it imposes that cap once, at the moment the
+    portfolio is built.  Nothing in the objective asks for it to hold afterwards, so a
+    policy is free to let the weights drift past it, and the drift costs nothing in a
+    sample where the asset that runs away is the one the optimiser already liked.  This
+    reads the cap as a standing constraint on the policy rather than a one-off
+    constraint on the portfolio, and checks it at a high quantile across scenarios
+    rather than on average, because a mandate that holds on average is not one.
+    """
+    largest = np.asarray(out["terminal_weights"]).max(axis=1)
+    return bool(np.percentile(largest, quantile) <= max_position)
+
+
+def tune(make_policy_for, grid, paths, target, client, reference, metric="value",
+         feasible=None):
     """Grid search over a policy's parameters on the tuning scenarios.
 
     `grid` is a list of parameter tuples and `make_policy_for` turns one tuple into a
     policy factory, so the search is the course's own policy search: pick a structure,
     then choose theta inside it by simulation on shared paths.
+
+    `feasible` is an optional predicate on the simulation output.  When it is given the
+    best feasible setting is returned, and every setting is still reported with whether
+    it passed, because the shape of the trade-off between the objective and the
+    constraint is the finding rather than a detail of the search.
     """
     from . import simulator
     results = []
     for parameters in grid:
         out = simulator.run_policy(make_policy_for(parameters), paths, target,
                                    client, reference)
+        largest = np.asarray(out["terminal_weights"]).max(axis=1)
         results.append({"parameters": parameters,
                         "score": float(np.mean(out[metric])),
                         "median_terminal": float(np.median(out["terminal"])),
-                        "turnover_per_year": float(np.mean(out["turnover_per_year"]))})
-    best = max(results, key=lambda row: row["score"])
+                        "turnover_per_year": float(np.mean(out["turnover_per_year"])),
+                        "largest_end_weight_p95": float(np.percentile(largest, 95)),
+                        "feasible": True if feasible is None else bool(feasible(out))})
+    admissible = [row for row in results if row["feasible"]]
+    if not admissible:
+        raise ValueError("no setting on this grid satisfies the constraint")
+    best = max(admissible, key=lambda row: row["score"])
     return best, results

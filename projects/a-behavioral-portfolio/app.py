@@ -315,11 +315,33 @@ st.markdown(
     f"your own value function is **{best['policy'].lower()}**, at a median of "
     f"{best['median wealth']:,.0f} with a {best['chance of missing the target']:.0%} chance of "
     f"missing the target.")
-st.markdown(
-    "The reason we still recommend rebalancing on a band rather than leaving the portfolio "
-    f"alone is that holding it untouched quietly abandons the plan, measured on "
-    f"{hold_name.lower()}: over ten years the largest "
-    f"holding grows from {weights.max():.0%} of the portfolio to {drifted.max(1).mean():.0%} on "
-    f"average and {drifted.max():.0%} in the worst scenario, which is not the risk you were "
-    "profiled for. Rebalancing holds the mix where it was put, and in a decade where one sector "
-    "had not run away from the rest it also finishes ahead.")
+kept = {row["policy"]: float(np.percentile(outs[row["policy"]]["terminal_weights"].max(1), 95))
+        for _, row in table.iterrows()}
+admissible = [name for name, largest in kept.items() if largest <= max_position]
+
+if admissible:
+    recommended = next(row["policy"] for _, row in table.iterrows()
+                       if row["policy"] in admissible)
+else:
+    recommended = best["policy"]
+
+if recommended == best["policy"]:
+    st.markdown(
+        f"That is also what we would recommend, because it keeps your largest holding at "
+        f"{kept[recommended]:.0%} in nineteen scenarios out of twenty, inside the "
+        f"{max_position:.0%} limit the portfolio was built under.")
+else:
+    st.markdown(
+        f"We would still recommend **{recommended.lower()}** instead, because the "
+        f"highest-scoring policy abandons the plan on the way. Measured on "
+        f"{hold_name.lower()}, over ten years the largest holding grows from "
+        f"{weights.max():.0%} of the portfolio to {drifted.max(1).mean():.0%} on average and "
+        f"{drifted.max():.0%} in the worst scenario, which is not the risk you were profiled "
+        f"for, while {recommended.lower()} keeps it at {kept[recommended]:.0%} in nineteen "
+        f"scenarios out of twenty.")
+
+if not admissible:
+    st.warning(
+        f"On these settings no policy shown keeps the largest holding inside {max_position:.0%} "
+        f"at the 95th percentile, so the recommendation above is the highest scoring one rather "
+        f"than one that holds the plan. Narrowing the rebalancing band usually fixes this.")

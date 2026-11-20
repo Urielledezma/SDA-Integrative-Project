@@ -131,7 +131,7 @@ with st.sidebar.form("questionnaire"):
     submitted = st.form_submit_button("Update my profile")
 
 st.sidebar.header("Your money")
-initial = st.sidebar.number_input("Amount to invest", 10_000.0, 10_000_000.0,
+initial = st.sidebar.number_input("Amount to invest, in pesos", 10_000.0, 10_000_000.0,
                                   config.INITIAL_WEALTH, step=10_000.0)
 target_multiple = st.sidebar.slider("Target, as a multiple of what you invest", 1.5, 6.0,
                                     config.HEADLINE_TARGET_MULTIPLE, step=0.5,

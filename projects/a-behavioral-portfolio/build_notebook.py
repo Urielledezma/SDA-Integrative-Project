@@ -261,7 +261,7 @@ Three results from that lecture apply directly. Merton's shows that the standard
 
 Our response takes the lecture's principle and applies it to a different input, which is a departure worth stating rather than glossing. Jagannathan and Ma show that a binding long-only constraint is algebraically identical to shrinking the covariance matrix, so a long-only optimiser that behaves well is running an undocumented shrinkage estimator, and the lecture's advice is to shrink deliberately instead, naming an explicit covariance target or an explicit prior on returns as the two ways to do it. We do neither of those exactly. We shrink the **mean** toward its cross-sectional average, at an intensity of 0.50, and leave the covariance as the sample covariance, because the same lecture ranks errors in means at ten times the cost of errors in covariances and it would be odd to regularise the cheap input while leaving the expensive one raw. The report shows what the whole range of that intensity does, so a reader who disagrees with 0.50 can read off the alternative.
 
-At an intensity of one every fund has the same expected mean, the programme has nothing left to maximise but the quadratic term, and it returns the minimum-variance portfolio, which is the frontier portfolio that refuses to use the input it cannot estimate.
+At an intensity of one every fund has the same expected mean, the programme has nothing left to maximise but the quadratic term, and it returns the minimum-variance portfolio **subject to the cardinality, lot and class constraints**, which is not the unconstrained global minimum-variance portfolio of the lecture but is the same idea: the frontier portfolio that refuses to use the input it cannot estimate.
 """)
 
 code(r"""
@@ -357,7 +357,7 @@ I_{t+1} &= I_t \,\bigl(1 + w_{\text{target}}^{\top} r_{t+1}\bigr)
 \end{aligned}
 $$
 
-The commission is charged on every peso that changes hands, which is $\sum_i |x_i|$, and not on the half of that sum the course calls turnover. The two differ by a factor of two and confusing them would halve or double every cost in the report, so turnover is reported separately in the course's definition and the cost is always stated against the quantity above. This convention is ours, and section 7 lists it with the others.
+The commission is charged on every peso that changes hands, which is $\sum_i |x_i|$, and not on the half of that sum that deck "002 mean variance" page 23 calls turnover. The two differ by a factor of two and confusing them would halve or double every cost in the report, so turnover is reported separately in that deck's definition and the cost is always stated against the quantity above. The charging convention is ours, and section 7 lists it with the others.
 
 **Objective.**
 
@@ -368,7 +368,9 @@ $$
 
 with $\rho$ the client's target. The mean and the percentiles of $W_T$ are reported next to it, because a number in prospect-theory units is not money and no client can be shown one on its own.
 
-Two notes on the objective. It is an expected utility of a terminal quantity, so it satisfies the tower property and a dynamic programming treatment would be available; the course shows that a mean-variance objective over terminal wealth does not, because variance does not separate, and so admits no Bellman equation at all. We still search over policies rather than solve backwards, because the state carries a twelve-month history and a continuous weight vector and the policies worth comparing are the ones a client could actually be told to follow.
+Two notes on the objective, and the first needs care with the words. This is an expectation taken over a function of terminal wealth, so it separates across time the way an expected utility does and a dynamic programming treatment would be available. It is **not** expected utility in the sense of the course's first module, because $v$ is a prospect-theory value function evaluated against a reference point rather than a utility over wealth levels, and the course treats prospect theory as giving up exactly those axioms. What matters for the method is the separability, not the label. By contrast the course shows that a mean-variance objective over terminal wealth does not separate, because variance does not satisfy the tower property, and so admits no Bellman equation at all.
+
+We still search over policies rather than solve backwards, because the state carries a twelve-month history and a continuous weight vector, and because the policies worth comparing are the ones a client could actually be told to follow.
 
 <a id="s34"></a>
 
@@ -421,7 +423,7 @@ Six rules, and the course's taxonomy puts each one somewhere.
 
 The band is a PFA because it is a closed-form function of the state with no optimisation at decision time, which is the course's own example of the class. The re-solve is a CFA because it is a myopic optimisation whose penalties are tuned so the policy performs well in a stochastic world, which the course describes as a mixed-integer programme with knobs; the course also notes that its rolling form is a CFA and DLA hybrid that collapses to the single-period CFA when the horizon is zero, and zero is the horizon used here.
 
-The two behavioural rules are PFAs in structure, since each is a threshold read off the state, and the course makes exactly this point about the disposition effect: a behavioural regularity maps a situation to a decision and can therefore be written down and evaluated like any other rule. What separates them is purpose. Their parameters describe the client, so they are never tuned against the objective, because a panic rule tuned to maximise terminal wealth would no longer be a panic rule.
+Both behavioural rules are PFAs in structure, though not the same kind: panic selling is a threshold read off the state, and performance chasing is a tilt proportional to how far each holding's recent return sits from the average, which the course's PFA slide lists as the linear form of the class. What licenses writing either of them down is the course's point about the disposition effect, that a behavioural regularity maps a situation to a decision and can therefore be evaluated like any other rule; the particular rules are ours, since the course specifies neither. What separates them from the optimising policies is purpose. Their parameters describe the client, so they are never tuned against the objective, because a panic rule tuned to maximise terminal wealth would no longer be a panic rule.
 
 The re-solve uses the mean and covariance estimated at time zero from real history rather than re-estimated from the simulated path, so no decision uses information that was not available when it was made. Its decisions are still path dependent, because the model pays to move away from the weights it currently holds and therefore returns a partial rebalance whose size depends on how far the portfolio has drifted.
 

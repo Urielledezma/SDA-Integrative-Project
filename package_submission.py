@@ -84,6 +84,15 @@ def main():
               or p.name in {"kaggle.json", "credentials.json"}]
     problems.extend(f"credential file would be shipped: {p}" for p in leaked)
 
+    print("checking the reports against what they computed")
+    verify = subprocess.run([sys.executable, "verify_report.py"],
+                            cwd=ROOT, capture_output=True, text=True)
+    for line in (verify.stdout or "").strip().splitlines():
+        print("  " + line)
+    if verify.returncode != 0:
+        problems.append("a report quotes figures its own cells did not print, "
+                        "or was never executed; see verify_report.py above")
+
     if not args.skip_tests:
         print("running the tests")
         result = subprocess.run([sys.executable, "-m", "pytest", "-q"],

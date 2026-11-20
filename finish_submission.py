@@ -32,23 +32,29 @@ def free_memory_gb():
         return None
 
 
-def stage(title, command, cwd):
+def stage(title, command, cwd, force=False):
     free = free_memory_gb()
     note = f"{free:.1f} GB free" if free is not None else "memory unknown"
-    print(f"\n=== {title}   [{note}]")
-    if free is not None and free < 1.5:
-        print("  Less than 1.5 GB free. Close some windows before continuing, because a")
-        print("  run of this length was stopped by the system once at that level.")
+    print(f"\n=== {title}   [{note}]", flush=True)
+    if free is not None and free < 1.5 and not force:
+        print("  Less than 1.5 GB free. A run of this length was stopped by the system")
+        print("  once at that level, so close some windows and start again, or pass")
+        print("  --yes to go ahead anyway.")
+        if not sys.stdin.isatty():
+            # Launched without a terminal, so there is nobody to answer a prompt and
+            # asking one would only raise. Stopping here is the honest outcome.
+            return False
         if input("  Continue anyway? [y/N] ").strip().lower() != "y":
             return False
     started = time.time()
     result = subprocess.run(command, cwd=cwd)
+
     print(f"  {'done' if result.returncode == 0 else 'FAILED'} "
           f"in {time.time() - started:.0f} s")
     return result.returncode == 0
 
 
-def project(folder, notebook):
+def project(folder, notebook, force=False):
     where = ROOT / "projects" / folder
     steps = [
         (f"{folder}: the tables", [sys.executable, "run_analysis.py"]),
@@ -58,7 +64,7 @@ def project(folder, notebook):
           "--execute", "--inplace", notebook]),
     ]
     for title, command in steps:
-        if not stage(title, command, where):
+        if not stage(title, command, where, force):
             print(f"\nStopped at: {title}. Nothing after it has run.")
             return False
     return True
@@ -69,26 +75,29 @@ def main():
     ap.add_argument("--all", action="store_true",
                     help="also run Project B, which is additional work")
     ap.add_argument("--no-zip", action="store_true")
+    ap.add_argument("--yes", action="store_true",
+                    help="go ahead even when memory is below the safe line")
     args = ap.parse_args()
 
     print("This takes roughly fifteen minutes for A, and about the same again for B.")
     print("Nothing is backgrounded, so leave the window alone until it finishes.")
 
-    if not project("a-behavioral-portfolio", "A_behavioral_portfolio.ipynb"):
+    if not project("a-behavioral-portfolio", "A_behavioral_portfolio.ipynb", args.yes):
         return 1
-    if args.all and not project("b-dynamic-pricing", "B_dynamic_pricing.ipynb"):
+    if args.all and not project("b-dynamic-pricing", "B_dynamic_pricing.ipynb", args.yes):
         return 1
 
     if not stage("the figures for the presentation",
                  [sys.executable, "presentation_figures.py"],
-                 ROOT / "projects" / "a-behavioral-portfolio"):
+                 ROOT / "projects" / "a-behavioral-portfolio", force=True):
         print("\nThe reports ran but their figures did not check out. Read the message "
               "above before packaging.")
         return 1
 
     if args.no_zip:
         return 0
-    if not stage("the submission zip", [sys.executable, "package_submission.py"], ROOT):
+    if not stage("the submission zip", [sys.executable, "package_submission.py"],
+                 ROOT, force=True):
         print("\nThe reports ran but the zip was refused. The reasons are above, and "
               "each one is a real problem rather than a formality.")
         return 1

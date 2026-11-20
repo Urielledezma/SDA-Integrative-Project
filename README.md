@@ -58,14 +58,27 @@ streamlit run projects/a-behavioral-portfolio/app.py
 Each project's own README gives the commands that regenerate its tables and re-execute its
 report from a clean kernel.
 
-The submission zip is built by a script rather than by hand:
+Everything that has to be run before submitting is one command, which runs the stages
+strictly in order and builds the zip at the end:
+
+```bash
+python finish_submission.py          # Project A, which is the submission
+python finish_submission.py --all    # A and B
+```
+
+It takes about fifteen minutes per project and nothing is backgrounded, because two
+executions of one notebook were once started in parallel here and the older one finished
+last, overwriting the newer.
+
+The packaging step is also available on its own, and it refuses to build a zip if a report
+notebook was never executed, if any cell ended in an error, if a report quotes figures its
+own cells did not print, if `results/` was left by a smoke run or by a different client
+than the code now produces, if the tests do not pass, or if a credential file would be
+shipped:
 
 ```bash
 python package_submission.py
 ```
-
-It refuses to build one if a report notebook was never executed, if any cell ended in an
-error, if the tests do not pass, or if a credential file would be shipped.
 
 ---
 

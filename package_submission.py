@@ -17,9 +17,13 @@ import zipfile
 
 ROOT = pathlib.Path(__file__).resolve().parent
 
+# The three scripts below are in the zip because the README tells the reader to run
+# them, and a run instruction that points at a file the reader does not have is worse
+# than no instruction at all.
 INCLUDE = [
     "README.md", "LICENSE", "requirements.txt", "pytest.ini",
     ".editorconfig", ".gitattributes",
+    "finish_submission.py", "package_submission.py", "verify_report.py",
 ]
 INCLUDE_TREES = ["projects"]
 

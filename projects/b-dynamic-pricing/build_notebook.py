@@ -73,7 +73,7 @@ code(r"""
 %load_ext autoreload
 %autoreload 2
 
-import os, sys, pathlib, warnings, itertools
+import os, sys, pathlib, warnings
 
 HERE = next(p for p in [pathlib.Path.cwd(), *pathlib.Path.cwd().parents]
             if (p / "src" / "dtp").is_dir())
@@ -88,23 +88,22 @@ import matplotlib.pyplot as plt
 from dtp import config, policies, simulator
 
 pd.set_option("display.width", 130)
-Z95 = 1.959963984540054
 
+# Every table below is produced by run_analysis.py, which tunes on one seed, evaluates on
+# another and writes what it found to results/. This report reads those files rather than
+# repeating the work, so the evaluation has one implementation and not two that can drift
+# apart. `python run_analysis.py` regenerates all of them.
+RESULTS = pathlib.Path("results")
+summary = (RESULTS / "summary.txt").read_text(encoding="utf-8")
+assert "SMOKE RUN" not in summary, "results/ holds a smoke run; run run_analysis.py first"
 
-def summarise(sample):
-    sample = np.asarray(sample, dtype=float)
-    se = sample.std(ddof=1) / np.sqrt(sample.size)
-    return {"mean": sample.mean(), "std": sample.std(ddof=1),
-            "p5": np.percentile(sample, 5), "p95": np.percentile(sample, 95),
-            "ci_low": sample.mean() - Z95 * se, "ci_high": sample.mean() + Z95 * se}
-
-
-def paired(sample, baseline):
-    difference = np.asarray(sample, float) - np.asarray(baseline, float)
-    out = summarise(difference)
-    out["wins"] = (difference > 0).mean()
-    out["significant"] = bool(out["ci_low"] > 0 or out["ci_high"] < 0)
-    return out
+policies_table = pd.read_csv(RESULTS / "policies.csv")
+paired_table = pd.read_csv(RESULTS / "paired_differences.csv")
+sensitivity_table = pd.read_csv(RESULTS / "sensitivity_eta.csv")
+fixed_table = pd.read_csv(RESULTS / "tuning_fixed.csv")
+schedule_table = pd.read_csv(RESULTS / "tuning_schedule.csv")
+lookahead_table = pd.read_csv(RESULTS / "tuning_lookahead.csv")
+print(summary.split("\n")[0])
 """)
 
 md(r"""
@@ -245,47 +244,25 @@ the reported numbers another. Comparisons against the baseline are paired.
 """)
 
 code(r"""
-tune_seeds = simulator.scenario_seeds(config.TUNE_SEED, config.N_TUNE)
-eval_seeds = simulator.scenario_seeds(config.EVAL_SEED, config.N_EVAL)
-
-rows = []
-for price in config.PRICE_GRID:
-    out = simulator.run_policy(policies.fixed_price(price), tune_seeds)
-    rows.append({"price": price, "revenue": out["revenue"].mean(),
-                 "sold": out["sold"].mean(), "sold_out": out["sold_out"].mean()})
-fixed_table = pd.DataFrame(rows)
 best_price = float(fixed_table.loc[fixed_table.revenue.idxmax(), "price"])
-print(f"best fixed price {best_price:.0f} of {len(config.PRICE_GRID)} tried, "
-      f"on {config.N_TUNE} tuning scenarios")
+print(f"best fixed price {best_price:.0f} of {len(config.PRICE_GRID)} tried, on "
+      f"{config.N_TUNE} tuning scenarios from seed {config.TUNE_SEED}")
 print(fixed_table.to_string(index=False, float_format=lambda v: f"{v:,.2f}"))
 """)
 
 code(r"""
-rows = []
-for start, slope, scarcity in itertools.product(config.SCHEDULE_START_GRID,
-                                                config.SCHEDULE_SLOPE_GRID,
-                                                config.SCHEDULE_SCARCITY_GRID):
-    out = simulator.run_policy(policies.price_schedule(start, slope, scarcity), tune_seeds)
-    rows.append({"start": start, "slope": slope, "scarcity": scarcity,
-                 "revenue": out["revenue"].mean(), "sold_out": out["sold_out"].mean()})
-schedule_table = pd.DataFrame(rows)
 best = schedule_table.loc[schedule_table.revenue.idxmax()]
 start, slope, scarcity = float(best.start), float(best.slope), float(best.scarcity)
 print(f"best schedule: start {start:.0f}, slope {slope:.1f}, scarcity {scarcity:.1f}, "
       f"of {len(schedule_table)} combinations")
-print(schedule_table.sort_values('revenue', ascending=False).head(8)
+print(schedule_table.sort_values("revenue", ascending=False).head(8)
       .to_string(index=False, float_format=lambda v: f"{v:,.2f}"))
 """)
 
 code(r"""
-rows = []
-for horizon in config.LOOKAHEAD_HORIZON_GRID:
-    out = simulator.run_policy(policies.lookahead(horizon), tune_seeds[:50])
-    rows.append({"horizon": horizon, "revenue": out["revenue"].mean(),
-                 "sold_out": out["sold_out"].mean()})
-lookahead_table = pd.DataFrame(rows)
 horizon = int(lookahead_table.loc[lookahead_table.revenue.idxmax(), "horizon"])
-print(f"best horizon {horizon}, tuned on fifty scenarios because each day solves a programme")
+print(f"best horizon {horizon}, tuned on a quarter of the scenarios because each day "
+      f"solves a programme")
 print(lookahead_table.to_string(index=False, float_format=lambda v: f"{v:,.2f}"))
 """)
 
@@ -296,55 +273,33 @@ md(r"""
 """)
 
 code(r"""
-SPECS = [
-    (f"Fixed price of {best_price:.0f}", "baseline", policies.fixed_price(best_price)),
-    (f"Schedule from {start:.0f}", "PFA", policies.price_schedule(start, slope, scarcity)),
-    (f"Lookahead over {horizon} days", "DLA", policies.lookahead(horizon)),
-]
-runs, rows = {}, []
-for name, kind, make in SPECS:
-    out = simulator.run_policy(make, eval_seeds)
-    runs[name] = out
-    revenue = summarise(out["revenue"])
-    rows.append({"policy": name, "class": kind, "revenue": revenue["mean"],
-                 "CI low": revenue["ci_low"], "CI high": revenue["ci_high"],
-                 "sd": revenue["std"], "5th": revenue["p5"], "95th": revenue["p95"],
-                 "tickets sold": out["sold"].mean(),
-                 "sells out": out["sold_out"].mean(),
-                 "average price": out["average_price"].mean()})
-results = pd.DataFrame(rows)
+results = policies_table.rename(columns={
+    "revenue_mean": "revenue", "ci_low": "CI low", "ci_high": "CI high",
+    "revenue_std": "sd", "revenue_p5": "5th", "revenue_p95": "95th",
+    "sold": "tickets sold", "sell_out_probability": "sells out",
+    "average_price": "average price"})
 print(f"{config.N_EVAL} scenarios from seed {config.EVAL_SEED}, the same for every policy")
 print(results.to_string(index=False, float_format=lambda v: f"{v:,.2f}"))
 """)
 
 code(r"""
-base_name = SPECS[0][0]
-rows = []
-for name, kind, make in SPECS[1:]:
-    difference = paired(runs[name]["revenue"], runs[base_name]["revenue"])
-    rows.append({"policy": name, "mean difference": difference["mean"],
-                 "CI low": difference["ci_low"], "CI high": difference["ci_high"],
-                 "wins": difference["wins"], "significant": difference["significant"]})
-print(f"paired against {base_name}")
-print(pd.DataFrame(rows).to_string(index=False, float_format=lambda v: f"{v:,.2f}"))
+print(f"paired against {results.policy.iloc[0]}")
+print(paired_table.rename(columns={"mean_difference": "mean difference",
+                                   "ci_low": "CI low", "ci_high": "CI high"})
+      .to_string(index=False, float_format=lambda v: f"{v:,.2f}"))
 """)
 
 code(r"""
-figure, (left, right) = plt.subplots(1, 2, figsize=(11, 4))
-days = np.arange(config.SELLING_DAYS)
-for name, kind, make in SPECS:
-    left.plot(days, np.median(runs[name]["price_paths"], axis=0), label=name)
-    right.plot(np.arange(config.SELLING_DAYS + 1),
-               np.median(runs[name]["seats_paths"], axis=0), label=name)
-left.set_xlabel("days on sale")
-left.set_ylabel("price")
-left.set_title("Median price charged")
-left.legend(fontsize=8)
-right.set_xlabel("days on sale")
-right.set_ylabel("seats remaining")
-right.set_title("Median seats remaining")
-right.axhline(0, linewidth=0.6, color="black")
-right.legend(fontsize=8)
+# The driver saves each policy's price path. How the seats went is already in the
+# sell-out column above, so one panel is enough here.
+price_paths = np.load(RESULTS / "price_paths.npy")
+figure, axis = plt.subplots(figsize=(9, 4))
+for paths, name in zip(price_paths, results.policy):
+    axis.plot(np.arange(paths.shape[1]), np.median(paths, axis=0), label=name)
+axis.set_xlabel("days on sale")
+axis.set_ylabel("price")
+axis.set_title(f"Median price charged, over {price_paths.shape[1]} scenarios")
+axis.legend(fontsize=8)
 plt.tight_layout()
 plt.savefig("results/figures/paths.png", dpi=120)
 plt.show()
@@ -376,22 +331,15 @@ wrong.
 """)
 
 code(r"""
-rows = []
-sensitivity_seeds = eval_seeds[:config.N_SENSITIVITY]
-print(f"on {len(sensitivity_seeds)} of the {len(eval_seeds)} scenarios, because the "
+print(f"on {config.N_SENSITIVITY} of the {config.N_EVAL} scenarios, because the "
       f"lookahead solves a programme a day")
-for eta in (0.0, 0.3, 0.6, 1.0):
-    for name, kind, make in SPECS:
-        out = simulator.run_policy(make, sensitivity_seeds, eta=eta)
-        rows.append({"eta": eta, "policy": name, "revenue": out["revenue"].mean(),
-                     "sells out": out["sold_out"].mean()})
-sensitivity = pd.DataFrame(rows)
+print()
 print("revenue by resentment of a price above the remembered one")
-print(sensitivity.pivot(index="policy", columns="eta", values="revenue")
+print(sensitivity_table.pivot(index="policy", columns="eta", values="revenue")
       .to_string(float_format=lambda v: f"{v:,.0f}"))
 print()
 print("sell-out probability")
-print(sensitivity.pivot(index="policy", columns="eta", values="sells out")
+print(sensitivity_table.pivot(index="policy", columns="eta", values="sell_out_probability")
       .to_string(float_format=lambda v: f"{v:.3f}"))
 """)
 

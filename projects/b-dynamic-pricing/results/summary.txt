@@ -1,6 +1,4 @@
-SMOKE RUN on 60 scenarios, which is fewer than the 500 the brief requires. These numbers are for checking that the pipeline runs and must not be quoted anywhere. Written before the guard that stamps this line existed, and added by hand afterwards.
-
-tuning on 40 scenarios from seed 20261120, reporting on 60 from seed 20261124
+tuning on 200 scenarios from seed 20261120, reporting on 500 from seed 20261124
 venue 2,000 seats, 60 days, prices 40 to 200 in steps of 10
 
 baseline            best fixed price 80 of 17 tried
@@ -8,17 +6,18 @@ PFA schedule        start 120, slope 0.6, scarcity 0.4, of 60 combinations
 DLA lookahead       horizon 20 of [5, 10, 20], tuned on a quarter of the scenarios because each day solves a programme
 
 policy                                          class         revenue        5th       95th    sold  sellout   avg p
-Fixed price of 80                               baseline      140,329    133,952    145,144   1,754      0%      80
-Schedule, start 120 slope 0.6 scarcity 0.4      PFA           137,712    131,112    143,616   1,859      0%      74
-Lookahead over 20 days                          DLA           142,230    135,712    146,556   1,994     83%      71
+Fixed price of 80                               baseline      139,895    134,156    144,884   1,749      0%      80
+Schedule, start 120 slope 0.6 scarcity 0.4      PFA           137,156    130,978    144,114   1,859      0%      74
+Lookahead over 20 days                          DLA           141,912    137,812    146,251   1,996     87%      71
 
 paired against the baseline, same scenario seeds on both sides
-  Schedule, start 120 slope 0.6 scarcity 0.4          -2,617   [-3,062, -2,172]   wins 3%   significant
-  Lookahead over 20 days                               1,901   [1,558, 2,244]   wins 92%   significant
+  Schedule, start 120 slope 0.6 scarcity 0.4          -2,739   [-2,893, -2,584]   wins 7%   significant
+  Lookahead over 20 days                               2,017   [1,877, 2,158]   wins 91%   significant
+sensitivity on 150 of those scenarios, since the lookahead solves a programme a day and four values of eta cost three times the comparison
 
 sensitivity to the penalty on pricing above the reference
-  Fixed price of 80                                   140,329    140,329    140,329    140,329
-  Lookahead over 20 days                              142,988    142,600    142,230    141,733
-  Schedule, start 120 slope 0.6 scarcity 0.4          138,164    137,862    137,712    137,387
+  Fixed price of 80                                   139,837    139,837    139,837    139,837
+  Lookahead over 20 days                              142,577    142,257    141,889    141,431
+  Schedule, start 120 slope 0.6 scarcity 0.4          137,625    137,344    137,107    136,823
 
-ran in 436 s
+ran in 1438 s

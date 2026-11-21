@@ -367,6 +367,12 @@ sensitivity has to show the direction and the rough size of an effect rather tha
 publishable interval, so it runs on the first 150 scenarios while the comparison above
 keeps all 500. Every figure in this section is therefore noisier than the ones above it,
 and none of them carries an interval for that reason.
+
+One row of the table below is worth reading as a check on the mechanism rather than as a
+result. The fixed price does not move with $\eta$ at all, and it should not: a price that
+never changes drags the reference price onto itself, so $p_t - r_t$ goes to zero and the
+penalty has nothing to act on. If that row ever moved, the reference-price update would be
+wrong.
 """)
 
 code(r"""

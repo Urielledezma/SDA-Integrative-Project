@@ -36,6 +36,11 @@ twenty five courses, thirty seven sections, fourteen professors, ten rooms and f
 enrollment history, and then reporting results measured against a world we had made up. With
 one project graded and four days to the deadline, the team put the time into A instead.
 
+It is deferred rather than abandoned. The questions that would have to be answered before
+any of its data could be written down are listed in the team's notes, and the first of them
+is the real curriculum, because a timetable built from invented course names is an exercise
+rather than a department.
+
 ---
 
 ## Running it

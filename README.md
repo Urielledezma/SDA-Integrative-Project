@@ -1,6 +1,6 @@
 # Sequential Decision Analytics: Integrative Project
 
-Three sequential decision problems modelled with Powell's framework, each solved with a
+Two sequential decision problems modelled with Powell's framework, each solved with a
 baseline and at least two policies from different policy classes, each evaluated in its own
 simulator on common random numbers, and each delivered with a dashboard a client can drive
 without reading the code.
